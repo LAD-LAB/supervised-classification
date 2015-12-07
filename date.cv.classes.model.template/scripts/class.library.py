@@ -2,52 +2,19 @@
 #
 # ___author___ : Firas Said Midani
 # ___e-mail___ : firas.midani@duke.edu
-# ___date_____ : 2015.08.30
+# ___date_____ : 2015.12.07
+# ___version__ : 1.0
 #
 # LIST OF FUNCTIONS
 #
-# box_dot_plot_hybrid
-#
-#
-# coef_based_feature_selection
-#	summarize feature importance using fold-specific regression coefficients
-#
-# describe_otus
-# 	for a dataframe, abbreviate all bacterial features and indicate their resolution
-#
-# describe_single_OTU
-# 	abbreviate a bacterial feature and indicate its resolution 
-#
-# dot_plots
-#
-#
-# dot_plots_log_scale
-#
-#
-# dot_plots_normal_transform
-#
-#
-# fractional_ranking_based_feature_selection
-# 	summarize feature importance using fold-specific feature rankings
-#
-# integer_ranking_based_feature_selection
-# 	summarize feature importance using fold-specific feature rankings
-#
-# kruskal_array
-#   performs kruskal-wallis test on each variable (column of X) as stratified by labels in Y
-#
-# LOGISTIC
-# 	performs cross-validated logistic regression with either l1-norm ro l2-nrom penalty
+# douleprint
+#	tunnels python output to a text file as well as shell
 #
 # microbeAbbreviate
 # 	simplifies bacterial feature names
 #
-# RF
-# 	performs cross-validated classification with random forests
-#
-# RF_RFE
-#   performs cross-validated classification with random forests on optimized number of 
-#   features based on recursive feature elimination
+# split_only
+#       splits a feature matrix and lables into training and testing subsets
 #
 # split_and_normalize
 # 	splits and normalizes/transforms data
@@ -56,17 +23,16 @@
 #	for each variable (column) in a training dataframe, identify normal scale (mu and sigma)
 #   then, transform accordingly the training, validation, and full data
 #
+# subset_data
+#	identifies samples that match a list of user-defined critiera. requires a mapping file.
+#     
 # summarize_with_roc
 # 	summarize classifier performance with an ROC curve
 #
-# SVM_KW
-#	performs cross-validated classification with SVM on optimized number of
-#   features based on kruskal-wallis univariate statistical test
-#
-# SVM_RFE
+# SVM_RFE_soft_two_stage
 # 	performs cross-validated classification with linear SVM on optimized number of 
 #   features based on recursive feature elimination
-#
+
 import \
     pandas as pd, \
     matplotlib.pyplot as plt, \
@@ -177,14 +143,9 @@ def split_and_normalize(x,y,train,test):
 #####################################
 
 def split_only(x,y,train,test):    
-    #from sklearn.preprocessing      import StandardScaler
 
     x_train = x.iloc[train,:]#.values;
     x_test  = x.iloc[test,:]#.values;
-    
-    #normal_scale = StandardScaler().fit(x_train);
-    #x_train      = normal_scale.transform(x_train);
-    #x_test       = normal_scale.transform(x_test);    
     
     y_train = y.iloc[train]#.values;
     y_test  = y.iloc[test]#.values;

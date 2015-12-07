@@ -2,8 +2,8 @@
 
 # __author__ = Firas Said Midani
 # __e-mail__ = fsm3@duke.edu
-# ___date___ = 2015.09.06
-# __update__ = 2015.09.06
+# ___date___ = 2015.12.07
+# __version_ = 1
 
 ##########################################################
 # DESCRIPTION  				   
@@ -22,25 +22,40 @@
 #  fine_steps       
 #  internal_cv      
 #  normalize        
+#  include_otus
+#  include_static
+#  pickle_model
 #
 # Performs (1) cross-validated evaluation of model performance, (2) model training on 
-#  a held-in subset of the data, and (3) model evaluation on a held-out subset.
+#  a held-in subset of the data, (3) model evaluation on a held-out subset, and (4)
+#  model training/evaluation on the whole data set
 #  
-# The script tracks the AUROC for the cross-validation, model training, and model
-#  validation seperately. 
+# The script that tracks the AUROC for the cross-validation, model training, and model
+#  validation is perfromed seperately seperately. 
 
 ##########################################################
 # INPUT    				   
 ##########################################################
 
-# params                = sys.argv[1]; print 'txt_X\t',params 
-# filepath              = sys.argv[2]; print 'filepath\t',filepath
-# simname               = sys.argv[3]; print 'simname\t',simname
-# txt_x_holdin_df       = sys.argv[4]; print 'txt_x_holdin_df\t',txt_x_holdin_df
-# txt_x_holdout_df      = sys.argv[5]; print 'txt_x_holdout_df\t',txt_x_holdout_df
-# txt_x_holdin_norm_df  = sys.argv[6]; print 'txt_x_holdin_norm_df\t',txt_x_holdin_norm_df
-# txt_x_holdout_norm_df = sys.argv[7]; print 'txt_x_holdout_norm_df\t',txt_x_holdout_norm_df
-# myRandSeed            = int(sys.argv[8]); #integer for seeding numpy random generator
+# params                = sys.argv[1]; parameter file 
+# txt_y_holdin_df       = sys.argv[2]; path to labels of hold in subset of data **
+# txt_y_holdout_df      = sys.argv[3]; path to labels of hold out subset of data **
+# txt_y_all             = sys.argv[4]; path to labels of the whole data set **
+# simname               = sys.argv[5]; name of model 
+# txt_x_holdin_df       = sys.argv[6]; path to hold in subset of dynamic features matirx
+# txt_x_holdout_df      = sys.argv[7]; path to hold out subset of dynamic featuers matrix
+# txt_x_all             = sys.argv[8]; path to whole data set of dynamic features matrix
+# txt_x_holdin_norm_df  = sys.argv[9]; same as txt_x_holdin_df but standard normalized features **
+# txt_x_holdout_norm_df = sys.argv[10]; same as txt_x_holdout_df but standard normalized features **
+# txt_clinical_df       = sys.argv[11]; path to whole data set of static features (here clinical features) **
+# filepath              = sys.argv[12]; filepath 
+# include_otus          = int(sys.argv[13]); 1="include dynamic (bacterial) features in model", 0="don't"
+# include_static        = int(sys.argv[14]); 1="include static (clinical) features in model", 0="don't"
+# pickle_modell         = int(sys.argv[15]); 1="pickle certain output of model", 0="don't"
+# myRandSeed            = int(sys.argv[16]); integer for seeding numpy random generator
+
+# KEY
+# ** these text file must include header of feature names and index_col of subject/sample IDs
 
 ##########################################################
 # CREATES/MODIFIES/REMOVES   				   
@@ -56,8 +71,9 @@
 #
 #
 #MODIFIES
-# * TXT file logging AUROC for classifier iterations related to this one
-# * TXT file logging job completion for classifier iterations including this one
+# * TXT file logging AROC scores for classifier iterations related to this one
+# * TXT file logging accuracy scores for classifier iterations related to this one
+# * TXT file logging matthew's correlation coefficient scores  for classifier iterations related to this one
 #
 #
 #REMOVES

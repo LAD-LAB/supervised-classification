@@ -2,8 +2,8 @@
 
 # __author__ = Firas Said Midani
 # __e-mail__ = fsm3@duke.edu
-# __date__   = 2015.09.06
-# __update__ = 2015.09.06
+# __update__ = 2015.12.07
+# __version_ = 1.0
 
 #########################################################
 # DESCRIPTION
@@ -17,27 +17,35 @@
 #  - num_features
 #  - coarse and fine steps
 #  - whether to normalize
+#  - whether to include bacterial and/or clinical features
+#  - whether to pickle some of the final model output
 #  - internal cross-validation number of folds
 #  - cross-validation scheme
 #  - classification method and parameterization
 # 
 # Do the following:
 #  - Perform either multiple iterations of a classifier, with true labels or shuffled labels. 
-#  - Output a histogram of AuROC with n equal to the number of iterations/permutations chosen. 
 # 
-# Designed to run a HPC (e.g. SLURM). It will create a job array with each corresponding
+# Designed to run on a HPC (e.g. SLURM). It will create a job array with each corresponding
 #  to a single classification (with selected cross-validation scheme, classifier, and 
-#  parameter grid search. See svm.seperate.py for more details. 
+#  optional parameter grid search). See class.single.versatile.rfe.py for more details. 
 
 #########################################################
 # INPUT 
 #########################################################
 
-# params      = sys.argv[1]; parameter file
-# filepath    = sys.argv[2]; path to store reulsts
-# simname     = sys.argv[3]; simulation name (used for naming files)
-# shuffle     = sys.argv[4]; 1="shuffle labels", 0="don't shuffle labels"
-# numperm     = int(sys.argv[5]); "number of permutations/iterations
+# params             = sys.argv[1]; parameter file
+# txt_featues_df     = sys.argv[2]; path to bacterial features matrix file
+# txt_taxa_level_map = sys.argv[3]; path to features taxonomic level map
+# txt_mapping        = sys.argv[4]; path to samples mapping file
+# txt_clinical_df    = sys.argv[5]; path to clinical features file
+# filepath           = sys.argv[6]; path to store reulsts
+# simname            = sys.argv[7; simulation name (used for naming files)
+# shuffle            = sys.argv[8]; 1="shuffle labels", 0="don't shuffle labels"
+# numperm            = int(sys.argv[9]); "number of permutations/iterations
+# include_otus       = int(sys.argv[10]); 1="include dynamic (bacterial) features in model", 0="don't"
+# include_static     = int(sys.argv[11]); 1="include static (clinical) features in model", 0="don't"
+# pickle_model       = int(sys.argv[12]); 1="pickle/store some output", 0="don't"
 
 ##########################################################
 # CREATES/MODIFIES/REMOVES
@@ -49,33 +57,25 @@
 #  * TXT (OUT) of shell output for this main job
 #  * TXT (ERR) of shell errors for this main job
 #  * TXT (SLURM) shell commands for submitting job array
-#  * TXT tracking successful job completion ~~
-#  * TXT summary of jobs running on SLURM
-#  * TXT list of jobs held by SLURM
-   #  * TXT of feature matrix
-#  * PKL of random seed for this main job 
-#  * PDF of histogram of AUROC for all iterations
+#  * TXT of feature matrix
 #
-#  times number of iterations (jobs submitted by this script)
-   #  * TXT of labels for each iteration 
+#  times number of iterations (jobs submitted by this script) 
+#  * TXT of labels for each iteration 
 #  * TXT (OUT) of shell output for each iteration 
 #  * TXT (ERR) of shell errors for each iteration 
 #  * TXT (OUT) file on directory where this main job is submitted (not sure why duplicate)
 #  * TXT (ERR) file on directory where this main job is submitted (not sure why duplicate)
 #
-#
 # REMOVES
-# * TXT tracking successful job completion ~~
-#
-#
+# 
+# KEY
 # ~~ these are files created and removed by this script
 
 ##########################################################
 # dependencies
 ##########################################################
 
-#  cholera_classifier_lib: e.g. 2015.02.28.smic.lib.py
-#  releaseHeldJobs.py
+#  cholera_classifie_libb: e.g. class.library.py
 #  SLURM: designed for usage on a HPC.
  
 ##########################################################

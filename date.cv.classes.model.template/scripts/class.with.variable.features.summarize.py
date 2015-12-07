@@ -13,7 +13,7 @@ metric    = sys.argv[2]
 if len(sys.argv)>3:
 	roc_frame = sys.argv[3]
 
-summary_pnl = pd.DataFrame(columns=['PipeOneEmp','PipeOnePerm','PipeOnePermNum','PipeOnePvalue','PipeTwoEmp','PipeTwoPerm','PipeTwoPermNum','PipeTwoPvalue'])#,index=[1]+range(10,501,10))
+summary_pnl = pd.DataFrame(columns=['PipeOneEmp','PipeOnePerm','PipeOnePermNum','PipeOnePvalue','PipeTwoEmp','PipeTwoPerm','PipeTwoPermNum','PipeTwoPvalue'])
 
 if metric=="auroc":
 	if   roc_frame == "probas":
