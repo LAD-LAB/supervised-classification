@@ -9,10 +9,10 @@ permute  = int(sys.argv[2]);
 #       on select number of features  include permutation tests to pipelines
 
 cnt=0;
-for nf in [1]+range(10,201,10):
+for nf in [1]+range(10,101,10):
 	# modify a copy of parameter file 
-	with open(filepath+'/scripts/class.rfe.modelparameters.py') as f:
-		new_file = open(filepath+'/results/param.files/class.rfe.'+str(nf)+'.model.parameters.py','w');
+	with open(filepath+'/scripts/class.two.stage.rfe.model.parameters.py') as f:
+		new_file = open(filepath+'/results/param.files/class.two.stage.rfe.'+str(nf)+'.model.parameters.py','w');
 		for line in f:
 			if line.startswith('num_features_2'):
 				new_file.write('num_features_2   = %s\n' % str(nf));
@@ -22,7 +22,7 @@ for nf in [1]+range(10,201,10):
 
 	# modify a copy of job file (EMPIRICAL)
 	with open(filepath+'/scripts/class.two.stage.rfe.template.slurm') as f:
-		new_file = open(filepath+'/results/slurm.filesclass.two.stage.rfe.'+str(nf)+'.empirical.slurm','w');
+		new_file = open(filepath+'/results/slurm.files/class.two.stage.rfe.'+str(nf)+'.empirical.slurm','w');
 		for line in f:
 			if   line.startswith('prefix'):
 				new_file.write('prefix='+filepath+'\n');
@@ -33,7 +33,7 @@ for nf in [1]+range(10,201,10):
 			elif line.startswith('pickle_model'):
 				new_file.write('pickle_model=1\n');
 			elif line.startswith('txt_params'):
-				new_file.write('txt_params=$prefix/results/param.files/class.rfe.%s.model.parameters.py\n' % str(nf));
+				new_file.write('txt_params=$prefix/results/param.files/class.two.stage.rfe.%s.model.parameters.py\n' % str(nf));
 			elif line.startswith('simname'):
 				new_file.write('simname=class.two.stage.rfe.'+str(nf)+'.empirical\n');
 			else:
@@ -50,10 +50,10 @@ for nf in [1]+range(10,201,10):
 					new_file.write('numperm=500\n');
 				elif line.startswith('shuffle'):
 					new_file.write('shuffle=1\n');
- 	                      elif line.startswith('pickle_model');
+ 	                        elif line.startswith('pickle_model'):
 	                               new_file.write('pickle_model=0\n');
 				elif line.startswith('txt_params'):
-					new_file.write('txt_params=$prefix/results/param.files/class.rfe.%s.model.parameters.py\n' % str(nf));
+					new_file.write('txt_params=$prefix/results/param.files/class.two.stage.rfe.%s.model.parameters.py\n' % str(nf));
 				elif line.startswith('simname'):
 					new_file.write('simname=class.two.stage.rfe.'+str(nf)+'.permutations\n');
 				else:

@@ -18,4 +18,4 @@ echo $simname
 echo $txt_out
 echo $txt_err
 
-srun -o $txt_out -e $txt_err python $pypath/class.with.variable.features.py $prefix 
+srun -o $txt_out -e $txt_err python $pypath/class.with.variable.features.py $prefix $2 

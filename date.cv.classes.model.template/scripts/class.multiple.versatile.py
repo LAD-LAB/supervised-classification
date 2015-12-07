@@ -82,55 +82,7 @@
 # initialization 				   
 ##########################################################
 					
-import warnings
-warnings.filterwarnings('ignore')
-
-import \
-    pandas as pd, \
-    matplotlib.pyplot as plt, \
-    numpy as np,\
-    random, \
-    time, \
-    imp, \
-    sys, \
-    os
-
-#####################################
-# classification auxiliary tools
-#####################################
-
-from sklearn.cross_validation   import StratifiedKFold, LeaveOneOut, StratifiedShuffleSplit 
-from sklearn.feature_selection  import RFECV, RFE, SelectKBest
-from sklearn.grid_search        import GridSearchCV
-from sklearn.preprocessing      import StandardScaler, binarize
-from sklearn.metrics            import auc, roc_curve, roc_auc_score
-
-#####################################
-# classification algorithms
-#####################################
-
-from sklearn.linear_model       import LogisticRegression
-from sklearn.svm                import SVC
-from sklearn.ensemble           import RandomForestClassifier
-
-#####################################
-# prototyping tools
-#####################################
-
-from sklearn.datasets           import make_classification
-
-#####################################
-# statistical tests
-#####################################
-
-from scipy.stats                import kruskal, mannwhitneyu
-
-#####################################
-# saving plots on pdf
-#####################################
-
-from   matplotlib.ticker               import MultipleLocator, FormatStrFormatter
-from   matplotlib.backends.backend_pdf import PdfPages
+import sys, imp, os
 
 #####################################
 # in-house tools
@@ -216,6 +168,7 @@ x_all.shape,y_all.shape
 #######################################################################
 ##Filter data based on frequency of presence of each feature across model samples
 #######################################################################
+
 bfd = pd.DataFrame(binarize(x_holdin_df),index=x_holdin_df.index,columns=x_holdin_df.keys())
 dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_holdin_df.shape[0]))[0]]
 
@@ -285,7 +238,7 @@ fid.write('#SBATCH --nice=300\n');
 fid.write('#SBATCH --array=0-'+str(numperm-1)+'%180\n\n');
 fid.write('out_path='+filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.out\n');
 fid.write('err_path='+filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.err\n\n');
-main_cmd = 'srun -o $out_path -e $err_path python '+pypath+'/class.single.versatile.rfe.py ';
+main_cmd = 'srun -o $out_path -e $err_path python '+pypath+'/class.single.versatile.two.stage.rfe.py ';
 main_cmd+= params+' ';
 main_cmd+= filepath+'/slurm.log/y.in.$SLURM_ARRAY_TASK_ID.txt ';
 main_cmd+= filepath+'/slurm.log/y.out.$SLURM_ARRAY_TASK_ID.txt ';

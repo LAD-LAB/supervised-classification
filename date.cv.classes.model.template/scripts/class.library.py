@@ -33,14 +33,15 @@
 # 	performs cross-validated classification with linear SVM on optimized number of 
 #   features based on recursive feature elimination
 
+import warnings
+warnings.filterwarnings('ignore')
+
 import \
     pandas as pd, \
-    matplotlib.pyplot as plt, \
     numpy as np,\
     random, \
     time, \
     sys, \
-    imp, \
     os
     
 #####################################
@@ -62,24 +63,10 @@ from sklearn.svm                import SVC
 from sklearn.ensemble           import RandomForestClassifier
 
 #####################################
-# prototyping tools
-#####################################
-
-from sklearn.datasets           import make_classification
-
-#####################################
 # statistical tests
 #####################################
 
-from scipy.stats                import kruskal, mannwhitneyu
-
-#####################################
-# saving plots on pdf
-#####################################
-
-from   matplotlib.ticker               import MultipleLocator, FormatStrFormatter
-from   matplotlib.backends.backend_pdf import PdfPages
-
+from scipy.stats                import mannwhitneyu
 
 #####################################
 
@@ -126,7 +113,6 @@ def microbeAbbreviate(fullTaxonomy):
 #####################################
 
 def split_and_normalize(x,y,train,test):    
-    from sklearn.preprocessing      import StandardScaler
 
     x_train = x.iloc[train,:];
     x_test  = x.iloc[test,:];
@@ -155,8 +141,7 @@ def split_only(x,y,train,test):
 #####################################
 
 def standard_normalize_training_data_and_transform_validation_data(training_df,validation_df):
-	
-	from sklearn.preprocessing import StandardScaler
+        print 'inside_function:\t(training,validaiton).shapes',training_df.shape, validation_df.shape	
 	
 	normal_scale       = StandardScaler().fit(training_df);
 	training_norm_df   = normal_scale.transform(training_df);
