@@ -20,10 +20,9 @@ txt_features_df=$prefix/data/sqrt_features_df.txt
 txt_taxa_level_map=$prefix/data/taxa_level_map.txt
 txt_mapping=$prefix/data/smic.study.mapping.txt
 txt_clinical=$prefix/data/smic.study.clinical.data.txt
-numperm=
-shuffle=
-include_otus=1
-include_static=0
-pickle_model=0
+num_features=
+numperm=5
+shuffle=1
 
-srun -o $txt_out -e $txt_err python $pypath/class.multiple.versatile.py $txt_params $txt_features_df $txt_taxa_level_map $txt_mapping $txt_clinical $simpath $simname $shuffle $numperm $include_otus $include_static $pickle_model
+
+srun -o $txt_out -e $txt_err python $pypath/class.multiple.versatile.py $txt_params $txt_features_df $txt_taxa_level_map $txt_mapping $txt_clinical $simpath $simname $shuffle $numperm $num_features

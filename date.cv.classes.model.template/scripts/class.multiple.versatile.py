@@ -43,9 +43,7 @@
 # simname            = sys.argv[7; simulation name (used for naming files)
 # shuffle            = sys.argv[8]; 1="shuffle labels", 0="don't shuffle labels"
 # numperm            = int(sys.argv[9]); "number of permutations/iterations
-# include_otus       = int(sys.argv[10]); 1="include dynamic (bacterial) features in model", 0="don't"
-# include_static     = int(sys.argv[11]); 1="include static (clinical) features in model", 0="don't"
-# pickle_model       = int(sys.argv[12]); 1="pickle/store some output", 0="don't"
+# num_features_2     = int(sys.argv[10]); target number of features in predictive model
 
 ##########################################################
 # CREATES/MODIFIES/REMOVES
@@ -112,9 +110,7 @@ filepath           = sys.argv[6]; print 'filepath\t',filepath
 simname            = sys.argv[7]; print 'simname\t',simname
 shuffle            = int(sys.argv[8]); print 'shuffle:\t',shuffle
 numperm            = int(sys.argv[9]); print 'numperm\t',numperm
-include_otus       = int(sys.argv[10]); print 'include_otus\t',include_otus
-include_static     = int(sys.argv[11]); print 'include_static\t',include_static
-pickle_model       = int(sys.argv[12]); print 'pickle_model\t',pickle_model
+num_features_2     = int(sys.argv[10]); print 'num_features\t', num_features_2
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
@@ -166,6 +162,25 @@ y_all = pd.concat([y_holdin_df,y_holdout_df])
 x_all.shape,y_all.shape
 
 #######################################################################
+##SAVE FEATURE MATRIX (before filtering for less frequent features
+#######################################################################
+
+x_holdin_norm_df,x_holdout_norm_df = standard_normalize_training_data_and_transform_validation_data(x_holdin_df.copy(),x_holdout_df.copy());
+
+# SAVE FEATURE MATRIX (should be same for all jobs in array)
+txt_x_holdin_df       = filepath+'/slurm.log/x_holdin_df.txt';
+txt_x_holdout_df      = filepath+'/slurm.log/x_holdout_df.txt';
+txt_x_all             = filepath+'/slurm.log/x_all.txt';
+txt_x_holdin_norm_df  = filepath+'/slurm.log/x_holdin_norm_df.txt';
+txt_x_holdout_norm_df = filepath+'/slurm.log/x_holdout_norm_df.txt';
+
+x_holdin_df.to_csv(txt_x_holdin_df,sep='\t',header=True,index_col=True);
+x_holdout_df.to_csv(txt_x_holdout_df,sep='\t',header=True,index_col=True);
+x_all.to_csv(txt_x_all,sep='\t',header=True,index_col=True);
+x_holdin_norm_df.to_csv(txt_x_holdin_norm_df,sep='\t',header=True,index_col=True);
+x_holdout_norm_df.to_csv(txt_x_holdout_norm_df,sep='\t',header=True,index_col=True);
+
+#######################################################################
 ##Filter data based on frequency of presence of each feature across model samples
 #######################################################################
 
@@ -195,11 +210,11 @@ if not os.path.isdir(filepath+'/slurm.log'):
     os.system('mkdir '+filepath+'/slurm.log');
     
 # SAVE FEATURE MATRIX (should be same for all jobs in array)
-txt_x_holdin_df       = filepath+'/slurm.log/x_holdin_df.txt';
-txt_x_holdout_df      = filepath+'/slurm.log/x_holdout_df.txt';
-txt_x_all             = filepath+'/slurm.log/x_all.txt';
-txt_x_holdin_norm_df  = filepath+'/slurm.log/x_holdin_norm_df.txt';
-txt_x_holdout_norm_df = filepath+'/slurm.log/x_holdout_norm_df.txt';
+txt_x_holdin_df       = filepath+'/slurm.log/x_holdin_df_dense.txt';
+txt_x_holdout_df      = filepath+'/slurm.log/x_holdout_df_dense.txt';
+txt_x_all             = filepath+'/slurm.log/x_all_dense.txt';
+txt_x_holdin_norm_df  = filepath+'/slurm.log/x_holdin_norm_df_dense.txt';
+txt_x_holdout_norm_df = filepath+'/slurm.log/x_holdout_norm_df_dense.txt';
 txt_y_holdin_df       = filepath+'/slurm.log/y_holdin_df.txt';
 txt_y_holdout_df      = filepath+'/slurm.log/y_holdout_df.txt';
 txt_y_all             = filepath+'/slurm.log/y_all.txt'; 
@@ -232,29 +247,30 @@ fid = open(filepath+'/slurm.log/'+simname+'.slurm','w');
 fid.write('#!/bin/sh\n\n');
 fid.write('#SBATCH --time-min=240\n');
 fid.write('#SBATCH --mem=4096MB\n');
-fid.write('#SBATCH --nice=300\n');
-#fid.write('#SBATCH --job-name==\n');
-#fid.write('#SBATCH --dependency=singleton\n');
+fid.write('#SBATCH --nice=500\n');
 fid.write('#SBATCH --array=0-'+str(numperm-1)+'%180\n\n');
-fid.write('out_path='+filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.out\n');
-fid.write('err_path='+filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.err\n\n');
-main_cmd = 'srun -o $out_path -e $err_path python '+pypath+'/class.single.versatile.two.stage.rfe.py ';
-main_cmd+= params+' ';
-main_cmd+= filepath+'/slurm.log/y.in.$SLURM_ARRAY_TASK_ID.txt ';
-main_cmd+= filepath+'/slurm.log/y.out.$SLURM_ARRAY_TASK_ID.txt ';
-main_cmd+= filepath+'/slurm.log/y.all.$SLURM_ARRAY_TASK_ID.txt ';
-main_cmd+= simname+' ';
-main_cmd+= txt_x_holdin_df+' ';
-main_cmd+= txt_x_holdout_df+' ';
-main_cmd+= txt_x_all+' ';
-main_cmd+= txt_x_holdin_norm_df+' ';
-main_cmd+= txt_x_holdout_norm_df+' ';
-main_cmd+= txt_clinical_df+' ';
-main_cmd+= filepath+' ';
-main_cmd+= str(include_otus)+' ';
-main_cmd+= str(include_static)+' ';
-main_cmd+= str(pickle_model)+' ';
-main_cmd+= str(seedint)+'\n\n';
+fid.write('source /home/lad44/davidlab/users/fsm/cholera/virtual_python_cholera/bin/activate\n\n');
+fid.write('out_path='          +filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.out\n');
+fid.write('err_path='          +filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.err\n\n');
+fid.write('y_holdin_df='       +filepath+'/slurm.log/y.in.$SLURM_ARRAY_TASK_ID.txt'  +' \n');
+fid.write('y_holdout_df='       +filepath+'/slurm.log/y.out.$SLURM_ARRAY_TASK_ID.txt' +' \n');
+fid.write('y_all_df='          +filepath+'/slurm.log/y.all.$SLURM_ARRAY_TASK_ID.txt' +' \n');
+fid.write('x_holdin_df='       +txt_x_holdin_df        +' \n');
+fid.write('x_holdout_df='      +txt_x_holdout_df       +' \n');
+fid.write('x_all_df='          +txt_x_all              +' \n');
+fid.write('x_holdin_norm_df='  +txt_x_holdin_norm_df   +' \n');
+fid.write('x_holdout_norm_df=' +txt_x_holdout_norm_df  +' \n');
+fid.write('x_static_df='       +txt_clinical_df        +' \n');
+fid.write('filepath='          +filepath               +' \n');
+fid.write('simname='           +simname                +' \n');
+fid.write('params='            +params                 +' \n');
+fid.write('num_features='      +str(num_features_2)    +' \n');
+fid.write('myRandSeed='        +str(seedint)+'\n\n');
+main_cmd = 'srun -o $out_path -e $err_path python '
+main_cmd+=  pypath+'/class.single.versatile.two.stage.rfe.py ';
+main_cmd+= '$y_holdin_df $y_holdout_df $y_all_df ';
+main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_holdin_norm_df $x_holdout_norm_df $x_static_df ';
+main_cmd+= '$filepath $simname $params $num_features $myRandSeed\n\n';
 fid.write(main_cmd);
 fid.write('echo $SLURM_ARRAY_JOB_ID > '+filepath+'/'+simname+'.job');
 fid.close()

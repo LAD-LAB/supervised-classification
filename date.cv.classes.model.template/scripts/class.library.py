@@ -141,7 +141,6 @@ def split_only(x,y,train,test):
 #####################################
 
 def standard_normalize_training_data_and_transform_validation_data(training_df,validation_df):
-        print 'inside_function:\t(training,validaiton).shapes',training_df.shape, validation_df.shape	
 	
 	normal_scale       = StandardScaler().fit(training_df);
 	training_norm_df   = normal_scale.transform(training_df);

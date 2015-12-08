@@ -13,9 +13,4 @@ simpath=$prefix
 txt_out=$simpath/$simname.driver.out
 txt_err=$simpath/$simname.driver.err
 
-echo $prefix
-echo $simname
-echo $txt_out
-echo $txt_err
-
 srun -o $txt_out -e $txt_err python $pypath/class.with.variable.features.py $prefix $2 

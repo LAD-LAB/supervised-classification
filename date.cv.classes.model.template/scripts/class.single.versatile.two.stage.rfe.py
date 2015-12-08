@@ -37,22 +37,20 @@
 # INPUT    				   
 ##########################################################
 
-# params                = sys.argv[1]; parameter file 
-# txt_y_holdin_df       = sys.argv[2]; path to labels of hold in subset of data **
-# txt_y_holdout_df      = sys.argv[3]; path to labels of hold out subset of data **
-# txt_y_all             = sys.argv[4]; path to labels of the whole data set **
-# simname               = sys.argv[5]; name of model 
-# txt_x_holdin_df       = sys.argv[6]; path to hold in subset of dynamic features matirx
-# txt_x_holdout_df      = sys.argv[7]; path to hold out subset of dynamic featuers matrix
-# txt_x_all             = sys.argv[8]; path to whole data set of dynamic features matrix
-# txt_x_holdin_norm_df  = sys.argv[9]; same as txt_x_holdin_df but standard normalized features **
-# txt_x_holdout_norm_df = sys.argv[10]; same as txt_x_holdout_df but standard normalized features **
-# txt_clinical_df       = sys.argv[11]; path to whole data set of static features (here clinical features) **
-# filepath              = sys.argv[12]; filepath 
-# include_otus          = int(sys.argv[13]); 1="include dynamic (bacterial) features in model", 0="don't"
-# include_static        = int(sys.argv[14]); 1="include static (clinical) features in model", 0="don't"
-# pickle_model         = int(sys.argv[15]); 1="pickle certain output of model", 0="don't"
-# myRandSeed            = int(sys.argv[16]); integer for seeding numpy random generator
+# txt_y_holdin_df       = sys.argv[1]; path to labels of hold in subset of data **
+# txt_y_holdout_df      = sys.argv[2]; path to labels of hold out subset of data **
+# txt_y_all             = sys.argv[3]; path to labels of the whole data set **
+# txt_x_holdin_df       = sys.argv[4]; path to hold in subset of dynamic features matirx
+# txt_x_holdout_df      = sys.argv[5]; path to hold out subset of dynamic featuers matrix
+# txt_x_all             = sys.argv[6]; path to whole data set of dynamic features matrix
+# txt_x_holdin_norm_df  = sys.argv[7]; same as txt_x_holdin_df but standard normalized features **
+# txt_x_holdout_norm_df = sys.argv[8]; same as txt_x_holdout_df but standard normalized features **
+# txt_clinical_df       = sys.argv[9]; path to whole data set of static features (here clinical features) **
+# filepath              = sys.argv[10]; filepath 
+# simname               = sys.argv[11]; name of model 
+# params                = sys.argv[12]; parameter file 
+# num_features_2        = int(sys.argv[13]); target number of features in predictive model
+# myRandSeed            = int(sys.argv[14]); integer for seeding numpy random generator
 
 # KEY
 # ** these text file must include header of feature names and index_col of subject/sample IDs
@@ -94,17 +92,6 @@ pypath = os.path.dirname(os.path.realpath(sys.argv[0]));
 foo = imp.load_source('classification_library',pypath+'/class.library.py')
 from classification_library import *
 
-######################################
-# modification of scikit-learn objects
-######################################
-class GridSearchWithCoef(GridSearchCV):
-    #http://stackoverflow.com/questions/29538292/doing-hyperparameter-estimation-for-the-estimator-in-each-fold-of-recursive-feat
-    @property
-    def coef_(self):
-        return self.best_estimator_.coef_
-    def support_(self):
-        return self.best_estimator_.support_
-
 ##########################################################
 # seed random generator				   
 ##########################################################
@@ -116,22 +103,20 @@ class GridSearchWithCoef(GridSearchCV):
 # input handling 				   
 ##########################################################
 
-params                = sys.argv[1]; print 'txt_X\t',params 
-txt_y_holdin_df       = sys.argv[2]; print 'txt_y_holdin_df\t',txt_y_holdin_df
-txt_y_holdout_df      = sys.argv[3]; print 'txt_y_holdout_df\t',txt_y_holdout_df
-txt_y_all             = sys.argv[4]; print 'txt_y_all\t',txt_y_all
-simname               = sys.argv[5]; print 'simname\t',simname
-txt_x_holdin_df       = sys.argv[6]; print 'txt_x_holdin_df\t',txt_x_holdin_df
-txt_x_holdout_df      = sys.argv[7]; print 'txt_x_holdout_df\t',txt_x_holdout_df
-txt_x_all             = sys.argv[8]; print 'txt_x_all\t',txt_x_all
-txt_x_holdin_norm_df  = sys.argv[9]; print 'txt_x_holdin_norm_df\t',txt_x_holdin_norm_df
-txt_x_holdout_norm_df = sys.argv[10]; print 'txt_x_holdout_norm_df\t',txt_x_holdout_norm_df
-txt_clinical_df       = sys.argv[11]; print 'txt_clinical_df\t',txt_clinical_df
-filepath              = sys.argv[12]; print 'filepath\t',filepath
-include_otus          = int(sys.argv[13]); print 'include_otus\t',include_otus
-include_static        = int(sys.argv[14]); print 'include_static\t',include_static
-pickle_model         = int(sys.argv[15]); print 'pickle_model\t',pickle_model
-myRandSeed            = int(sys.argv[16]); #integer for seeding numpy random generator
+txt_y_holdin_df       = sys.argv[1]; print 'txt_y_holdin_df\t',txt_y_holdin_df
+txt_y_holdout_df      = sys.argv[2]; print 'txt_y_holdout_df\t',txt_y_holdout_df
+txt_y_all             = sys.argv[3]; print 'txt_y_all\t',txt_y_all
+txt_x_holdin_df       = sys.argv[4]; print 'txt_x_holdin_df\t',txt_x_holdin_df
+txt_x_holdout_df      = sys.argv[5]; print 'txt_x_holdout_df\t',txt_x_holdout_df
+txt_x_all             = sys.argv[6]; print 'txt_x_all\t',txt_x_all
+txt_x_holdin_norm_df  = sys.argv[7]; print 'txt_x_holdin_norm_df\t',txt_x_holdin_norm_df
+txt_x_holdout_norm_df = sys.argv[8]; print 'txt_x_holdout_norm_df\t',txt_x_holdout_norm_df
+txt_clinical_df       = sys.argv[9]; print 'txt_clinical_df\t',txt_clinical_df
+filepath              = sys.argv[10]; print 'filepath\t',filepath
+simname               = sys.argv[11]; print 'simname\t',simname
+params                = sys.argv[12]; print 'parameter_file\t',params 
+num_features_2        = int(sys.argv[13]); print 'num_features_2\t',num_features_2
+myRandSeed            = int(sys.argv[14]); print 'myRandsed\t', myRandSeed
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
@@ -157,15 +142,10 @@ y_holdout_df      = pd.read_csv(txt_y_holdout_df,      sep='\t',header=0,index_c
 y_all             = pd.read_csv(txt_y_all,             sep='\t',header=0,index_col=0);
 clinical_df       = pd.read_csv(txt_clinical_df,       sep='\t',header=0,index_col=0);
 
-#x_all = pd.concat([x_holdin_df,x_holdout_df])
-#y_all = pd.concat([y_holdin_df,y_holdout_df])
-
 
 #######################################################################
 #Filter data based on frequency of presence of each feature across model samples
 #######################################################################
-#bfd = pd.DataFrame(binarize(x_all),index=x_all.index,columns=x_all.keys())
-#dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape))[0]]
 
 x_all_norm_df, x_all_norm_df = standard_normalize_training_data_and_transform_validation_data(\
                                               x_all,x_all)
