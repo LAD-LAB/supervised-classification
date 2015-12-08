@@ -50,7 +50,8 @@
 # simname               = sys.argv[11]; name of model 
 # params                = sys.argv[12]; parameter file 
 # num_features_2        = int(sys.argv[13]); target number of features in predictive model
-# myRandSeed            = int(sys.argv[14]); integer for seeding numpy random generator
+# pickle_model          = int(sys.argv[14]); 1="pickle select model output", 0="don't pickle anything"
+# myRandSeed            = int(sys.argv[15]); integer for seeding numpy random generator
 
 # KEY
 # ** these text file must include header of feature names and index_col of subject/sample IDs
@@ -103,20 +104,21 @@ from classification_library import *
 # input handling 				   
 ##########################################################
 
-txt_y_holdin_df       = sys.argv[1]; print 'txt_y_holdin_df\t',txt_y_holdin_df
-txt_y_holdout_df      = sys.argv[2]; print 'txt_y_holdout_df\t',txt_y_holdout_df
-txt_y_all             = sys.argv[3]; print 'txt_y_all\t',txt_y_all
-txt_x_holdin_df       = sys.argv[4]; print 'txt_x_holdin_df\t',txt_x_holdin_df
-txt_x_holdout_df      = sys.argv[5]; print 'txt_x_holdout_df\t',txt_x_holdout_df
-txt_x_all             = sys.argv[6]; print 'txt_x_all\t',txt_x_all
-txt_x_holdin_norm_df  = sys.argv[7]; print 'txt_x_holdin_norm_df\t',txt_x_holdin_norm_df
-txt_x_holdout_norm_df = sys.argv[8]; print 'txt_x_holdout_norm_df\t',txt_x_holdout_norm_df
-txt_clinical_df       = sys.argv[9]; print 'txt_clinical_df\t',txt_clinical_df
-filepath              = sys.argv[10]; print 'filepath\t',filepath
-simname               = sys.argv[11]; print 'simname\t',simname
-params                = sys.argv[12]; print 'parameter_file\t',params 
-num_features_2        = int(sys.argv[13]); print 'num_features_2\t',num_features_2
-myRandSeed            = int(sys.argv[14]); print 'myRandsed\t', myRandSeed
+txt_y_holdin_df       = sys.argv[1];       print 'txt_y_holdin_df\t',       txt_y_holdin_df
+txt_y_holdout_df      = sys.argv[2];       print 'txt_y_holdout_df\t',      txt_y_holdout_df
+txt_y_all             = sys.argv[3];       print 'txt_y_all\t',             txt_y_all
+txt_x_holdin_df       = sys.argv[4];       print 'txt_x_holdin_df\t',       txt_x_holdin_df
+txt_x_holdout_df      = sys.argv[5];       print 'txt_x_holdout_df\t',      txt_x_holdout_df
+txt_x_all             = sys.argv[6];       print 'txt_x_all\t',             txt_x_all
+txt_x_holdin_norm_df  = sys.argv[7];       print 'txt_x_holdin_norm_df\t',  txt_x_holdin_norm_df
+txt_x_holdout_norm_df = sys.argv[8];       print 'txt_x_holdout_norm_df\t', txt_x_holdout_norm_df
+txt_clinical_df       = sys.argv[9];       print 'txt_clinical_df\t',       txt_clinical_df
+filepath              = sys.argv[10];      print 'filepath\t',              filepath
+simname               = sys.argv[11];      print 'simname\t',               simname
+params                = sys.argv[12];      print 'parameter_file\t',        params 
+num_features_2        = int(sys.argv[13]); print 'num_features_2\t',        num_features_2
+pickle_model          = int(sys.argv[14]); print 'pickle_model\t',          pickle_model
+myRandSeed            = int(sys.argv[15]); print 'myRandsed\t',             myRandSeed
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *

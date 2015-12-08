@@ -44,6 +44,7 @@
 # shuffle            = sys.argv[8]; 1="shuffle labels", 0="don't shuffle labels"
 # numperm            = int(sys.argv[9]); "number of permutations/iterations
 # num_features_2     = int(sys.argv[10]); target number of features in predictive model
+# pickle_model       = int(sys.argv[11]); 1="pickle select model output", 0="don't pickle anything"
 
 ##########################################################
 # CREATES/MODIFIES/REMOVES
@@ -111,6 +112,7 @@ simname            = sys.argv[7]; print 'simname\t',simname
 shuffle            = int(sys.argv[8]); print 'shuffle:\t',shuffle
 numperm            = int(sys.argv[9]); print 'numperm\t',numperm
 num_features_2     = int(sys.argv[10]); print 'num_features\t', num_features_2
+pickle_model       = int(sys.argv[11]); print 'pickle_model\t', pickle_model
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
@@ -265,12 +267,13 @@ fid.write('filepath='          +filepath               +' \n');
 fid.write('simname='           +simname                +' \n');
 fid.write('params='            +params                 +' \n');
 fid.write('num_features='      +str(num_features_2)    +' \n');
+fid.write('pickle_model='      +str(pickle_model)      +' \n');
 fid.write('myRandSeed='        +str(seedint)+'\n\n');
 main_cmd = 'srun -o $out_path -e $err_path python '
 main_cmd+=  pypath+'/class.single.versatile.two.stage.rfe.py ';
 main_cmd+= '$y_holdin_df $y_holdout_df $y_all_df ';
 main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_holdin_norm_df $x_holdout_norm_df $x_static_df ';
-main_cmd+= '$filepath $simname $params $num_features $myRandSeed\n\n';
+main_cmd+= '$filepath $simname $params $num_features $pickle_model $myRandSeed\n\n';
 fid.write(main_cmd);
 fid.write('echo $SLURM_ARRAY_JOB_ID > '+filepath+'/'+simname+'.job');
 fid.close()

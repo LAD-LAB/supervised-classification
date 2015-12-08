@@ -34,7 +34,7 @@ holdout_flag2     = {'color':[3,4],'day':[2],'Batch':[2]}
 outcomes_dict    = {1:1,2:1,3:0,4:0}
 outcomes_dict    = {1:1,2:1,3:0,4:0}
 
-frequency_cutoff = 0.45;
+frequency_cutoff = 0.40;
 
 num_features_1   = 350;
 coarse_steps_1   = 100;
@@ -44,14 +44,13 @@ internal_cv      = 10;
 normalize        = 1;
 include_otus     = 1;
 include_static   = 0;
-pickle_model     = 0;
 
 # CHOOSE VALIDATION SCHEME
 
 #CVS = 'LOO';
 #CVS = 'holdout_validation';
 #CVS = 'SKF.10';
-CVS = 'SSS.250.10';
+CVS = 'SSS.300.10';
 
 ## CHOOSE CLASSIFIER
 
