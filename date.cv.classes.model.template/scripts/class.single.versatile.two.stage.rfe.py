@@ -3,7 +3,7 @@
 # __author__ = Firas Said Midani
 # __e-mail__ = fsm3@duke.edu
 # ___date___ = 2015.12.07
-# __version_ = 1
+# __version_ = 1.0
 
 ##########################################################
 # DESCRIPTION  				   

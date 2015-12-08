@@ -5,6 +5,17 @@
 # __update__ = 2015.12.07
 # __version_ = 1.0
 
+#############################################################################
+# DESCRIPTION
+#############################################################################
+# This script summarizes the results of a series of classifiers that vary by
+#  simply a number (here NF). It summarizes the mean metrics for the 
+#  empirical model and its respective permuted iterations. The latter allows
+#  for the computation of a p-value (or Type I error) for the empirical 
+#  model.
+ 
+
+
 import \
 pandas as pd, \
 numpy  as np, \
@@ -12,14 +23,13 @@ time, \
 sys, \
 os
 
-#filepath='/home/lad44/davidlab/users/fsm/cholera/20151130.HoldoutValidation.YGBR.ridge';
-filepath  = sys.argv[1]
-metric    = sys.argv[2]
-if len(sys.argv)>3:
-	roc_frame = sys.argv[3]
+filepath  = sys.argv[1] # parent directory for classifier runs 
+metric    = sys.argv[2] # either of {auroc, acc, mcc} which correspond to area under ROC curve, accuracy, and matthews's correlation coefficient scores
+if len(sys.argv)>3:     # if you select auroc, you also need to define the underlying numbers to compute it. either of the following
+	roc_frame = sys.argv[3]   # {probas, scores, mean_probas, mean_scores}
 #endif
 
-summary_pnl = pd.DataFrame(columns=['PipeOneEmp','PipeOnePerm','PipeOnePermNum','PipeOnePvalue','PipeTwoEmp','PipeTwoPerm','PipeTwoPermNum','PipeTwoPvalue'])
+summary_pnl = pd.DataFrame(columns=['AvgEmpMetric','AvgNullMetric','NumEmpIterations','NumNullIterations','EmpMetricPvalue'])
 
 if metric=="auroc":
 	if   roc_frame == "probas":
@@ -49,22 +59,18 @@ for nf in range(1,501):
 	if os.path.isfile(empirical):
 		if os.stat(empirical).st_size != 0:
 			nf_summ = pd.read_csv(empirical,sep='\t',header=None,index_col=0);
-			summary_pnl.loc[nf,'PipeOneEmp'] = nf_summ.iloc[0,idx_p1]
-			summary_pnl.loc[nf,'PipeTwoEmp'] = nf_summ.iloc[0,idx_p2]
+			summary_pnl.loc[nf,'AvgEmpMetric']     = nf_summ.iloc[0,idx_p1]
+			summary_pnl.loc[nf,'NumEmpIterations'] = len(np.where(nf_summ.iloc[:,idx_p1])[0]); 
 			empPipeOne = nf_summ.iloc[0,idx_p1];
-			empPipeTwo = nf_summ.iloc[0,idx_p2];
 		#endif
 	#endif
 	permutation = filepath + '/results/class.two.stage.rfe.'+str(nf)+'.permutations/'+metric+'.txt';
 	if os.path.isfile(permutation):
 		if os.stat(permutation).st_size != 0:
 			nf_summ = pd.read_csv(permutation,sep='\t',header=None,index_col=0);
-			summary_pnl.loc[nf,'PipeOnePerm']    = np.mean(nf_summ.iloc[:,idx_p1])
-			summary_pnl.loc[nf,'PipeTwoPerm']    = np.mean(nf_summ.iloc[:,idx_p2])
-			summary_pnl.loc[nf,'PipeOnePermNum'] = len(np.where(nf_summ.iloc[:,idx_p1])[0]);
-			summary_pnl.loc[nf,'PipeTwoPermNum'] = len(np.where(nf_summ.iloc[:,idx_p2])[0]);
-			summary_pnl.loc[nf,'PipeOnePvalue']  = float(len(np.where(nf_summ.iloc[:,idx_p1]>empPipeOne)[0]))/(len(np.where(nf_summ.iloc[:,idx_p1])[0])+1);
-			summary_pnl.loc[nf,'PipeTwoPvalue']  = float(len(np.where(nf_summ.iloc[:,idx_p2]>empPipeTwo)[0]))/(len(np.where(nf_summ.iloc[:,idx_p2])[0])+1);
+			summary_pnl.loc[nf,'AvgNullMetric']     = np.mean(nf_summ.iloc[:,idx_p1])
+			summary_pnl.loc[nf,'NumNullIterations'] = len(np.where(nf_summ.iloc[:,idx_p1])[0]);
+			summary_pnl.loc[nf,'EmpMetricPvalue']   = float(len(np.where(nf_summ.iloc[:,idx_p1]>empPipeOne)[0]))/(len(np.where(nf_summ.iloc[:,idx_p1])[0])+1);
 		#endif
 	#endif
 
