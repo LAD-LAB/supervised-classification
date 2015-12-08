@@ -180,7 +180,7 @@ def SVM_RFE_soft_two_stage(arg_ext_cv,x,y,coarse_1,coarse_2,coarse_step_1,coarse
         x_train,x_test,y_train,y_test = split_only(x,y,train,test)
 
 
-	#######################################################################
+	#######################################################################
 	#Filter data based on frequency of presence of each feature across model samples
 	#######################################################################
 	bfd = pd.DataFrame(binarize(x_train),index=x_train.index,columns=x_train.keys())
@@ -239,7 +239,4 @@ def SVM_RFE_soft_two_stage(arg_ext_cv,x,y,coarse_1,coarse_2,coarse_step_1,coarse
 		print "acc=%0.4f"   % accuracy
 		print "mcc=%0.4f"   % matthews
 		
-     	#del opt_clf,x_train,x_test,y_train,y_test,top_features
-        
- 	
     return _trues,_probas,_predicts,_scores,_auroc_p,_auroc_s,_acc,_mcc
