@@ -115,6 +115,10 @@ num_features_2     = int(sys.argv[10]); print 'num_features\t', num_features_2
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
 
+# INITIALIZE JOB ARRAY REPOSITORY
+if not os.path.isdir(filepath+'/slurm.log'):
+    os.system('mkdir '+filepath+'/slurm.log');
+ 
 ##########################################################
 # classifier input and parameters			   
 ##########################################################
@@ -205,10 +209,6 @@ for filetype in ['/auroc.txt','/acc.txt','/mcc.txt']:
 # distribute jobs input		   
 ##########################################################
 
-# INITIALIZE JOB ARRAY REPOSITORY
-if not os.path.isdir(filepath+'/slurm.log'):
-    os.system('mkdir '+filepath+'/slurm.log');
-    
 # SAVE FEATURE MATRIX (should be same for all jobs in array)
 txt_x_holdin_df       = filepath+'/slurm.log/x_holdin_df_dense.txt';
 txt_x_holdout_df      = filepath+'/slurm.log/x_holdout_df_dense.txt';

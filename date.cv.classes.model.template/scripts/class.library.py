@@ -16,9 +16,6 @@
 # split_only
 #       splits a feature matrix and lables into training and testing subsets
 #
-# split_and_normalize
-# 	splits and normalizes/transforms data
-#
 # standard_normalize_training_data_and_transform_validation_data(df)
 #	for each variable (column) in a training dataframe, identify normal scale (mu and sigma)
 #   then, transform accordingly the training, validation, and full data
@@ -109,22 +106,6 @@ def microbeAbbreviate(fullTaxonomy):
         reducedTaxonomy = reducedTaxonomy+" ("+precision_levels[precision]+")"
         
     return reducedTaxonomy
-
-#####################################
-
-def split_and_normalize(x,y,train,test):    
-
-    x_train = x.iloc[train,:];
-    x_test  = x.iloc[test,:];
-    
-    normal_scale = StandardScaler().fit(x_train);
-    x_train      = normal_scale.transform(x_train);
-    x_test       = normal_scale.transform(x_test);    
-    
-    y_train = y.iloc[train];
-    y_test  = y.iloc[test];
-    
-    return x_train,x_test,y_train,y_test
 
 #####################################
 
