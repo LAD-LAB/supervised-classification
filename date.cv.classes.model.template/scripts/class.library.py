@@ -36,6 +36,7 @@ warnings.filterwarnings('ignore')
 import \
     pandas as pd, \
     numpy as np,\
+    pickle, \
     random, \
     time, \
     sys, \
@@ -218,7 +219,7 @@ def SVM_RFE_soft_two_stage(arg_ext_cv,x,y,coarse_1,coarse_2,coarse_step_1,coarse
         probas   = opt_clf.predict_proba(x_test_top)[:,1]; 
 	scores   = opt_clf.decision_function(x_test_top);
 	predicts = opt_clf.predict(x_test_top);
-	trues    = y_test.values;
+	trues    = np.ravel(y_test.values);
 	
 	_probas   += list(probas);
  	_predicts += list(predicts);
