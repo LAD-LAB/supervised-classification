@@ -187,7 +187,6 @@ cv_trues,cv_probas,cv_predicts,cv_scores,_auroc_p,_auroc_s,_acc,_mcc = SVM_RFE_s
 											       CVCLFS,frequency_cutoff,normalize,clinical_df,\
 											       include_otus,include_static);
                                                              
-#_trues,_probas,_scores,_select = [arg for arg in cv_args_out[0:4]];
 fpr_p,tpr_p,thresh_p = roc_curve(np.ravel(cv_trues),cv_probas);
 fpr_s,tpr_s,thresh_s = roc_curve(np.ravel(cv_trues),cv_scores);
 
@@ -197,70 +196,8 @@ cv_auroc_s     = auc(fpr_s,tpr_s);
 cv_acc         = accuracy_score(np.ravel(cv_trues),cv_predicts);
 cv_mcc         = matthews_corrcoef(np.ravel(cv_trues),cv_predicts);
  
-#######################################################################
-###STAGE 1 MODEL TRAINING: Classifier Trained on held-in training  set with reduced set of features 
-#######################################################################
-training_probas,training_scores,training_trues = [[] for aa in range(3)]
-
-if normalize==1:
-    x_holdin_scaled_df  = x_holdin_norm_df;
-    x_holdout_scaled_df = x_holdout_norm_df;
-else:
-    x_holdin_scaled_df  = x_holdin_df;
-    x_holdout_scaled_df = x_holdout_df;
-
-if include_otus==1:
-
-	rfe1 = RFE(estimator=CVCLFS,n_features_to_select=num_features_1,step=coarse_steps_1)
-	rfe2 = RFE(estimator=CVCLFS,n_features_to_select=num_features_2,step=coarse_steps_2)
-
-	coarse_selector_1 = rfe1.fit(x_holdin_scaled_df,y_holdin_df);
-	coarse_selector_2 = rfe2.fit(x_holdin_scaled_df.iloc[:,coarse_selector_1.support_],y_holdin_df)
-
-	top_features       = np.where(coarse_selector_1.support_)[0][np.where(coarse_selector_2.support_)[0]];
-	top_features_names = x_holdin_scaled_df.keys()[top_features];
-
-	x_holdin_top  = x_holdin_scaled_df.iloc[:,top_features];
-	x_holdout_top = x_holdout_scaled_df.iloc[:,top_features].fillna(0);
-  
-if    (include_otus==1) and (include_static==1): 
-	x_holdin_top  = x_holdin_top.join(clinical_df)
-	x_holdout_top = x_holdout_top.join(clinical_df).fillna(0);
-
-elif  (include_otus==0) and (include_static==1):
-	x_holdin_top  = clinical_df.loc[x_holdin_df.index];
-	x_holdout_top = clinical_df.loc[x_holdout_df.index].fillna(0);
-
-opt_clf = CLFS.fit(x_holdin_top,y_holdin_df);
-
-training_probas+= list(opt_clf.predict_proba(x_holdin_top)[:,1])
-training_scores+= list(opt_clf.decision_function(x_holdin_top))
-training_trues += list(y_holdin_df.values); 
-fpr_p,tpr_p,thresh_p  = roc_curve(np.ravel(training_trues),training_probas);
-fpr_s,tpr_s,thresh_s  =	roc_curve(np.ravel(training_trues),training_scores);
-training_auroc_p      = auc(fpr_p,tpr_p)
-training_auroc_s      = auc(fpr_s,tpr_s)
-training_acc          = accuracy_score(y_holdin_df.values, opt_clf.predict(x_holdin_top));
-training_mcc          = matthews_corrcoef(y_holdin_df.values, opt_clf.predict(x_holdin_top));
-
-#######################################################################
-###STAGE 2 MODEL VALIDATION: Classifier Tested on held-out validation set iwht reduced set of features
-#######################################################################
-validation_probas,validation_scores,validation_trues = [[] for aa in range(3)]
-
-# Evaluate Model Performance on held out data
-validation_probas+= list(opt_clf.predict_proba(x_holdout_top)[:,1])
-validation_scores+= list(opt_clf.decision_function(x_holdout_top))
-validation_trues += list(y_holdout_df.values); 
-fpr_p,tpr_p,thresh_p  = roc_curve(np.ravel(validation_trues),validation_probas);
-fpr_s,tpr_s,thresh_s  = roc_curve(np.ravel(validation_trues),validation_scores);
-validation_auroc_p    = auc(fpr_p,tpr_p)
-validation_auroc_s    = auc(fpr_s,tpr_s)
-validation_acc        = accuracy_score(y_holdout_df.values, opt_clf.predict(x_holdout_top));
-validation_mcc        = matthews_corrcoef(y_holdout_df.values, opt_clf.predict(x_holdout_top));
-
 #######################################################################################
-##STAGE 3 MODEL DESCRIPTION: Run classifier on all samples and record selected features
+##FINAL MODEL DESCRIPTION: Run classifier on all samples and record selected features
 #######################################################################################
 
 if normalize==1:
@@ -269,9 +206,9 @@ else:
 	x_use = x_all;
 #endif
 
-#######################################################################
+################################################################################
 #Filter data based on frequency of presence of each feature across model samples
-#######################################################################
+#################################################################################
 bfd = pd.DataFrame(binarize(x_all),index=x_all.index,columns=x_all.keys())
 dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape[0]))[0]]
 
@@ -291,9 +228,8 @@ if include_otus==1:
 
 	x_all_top = x_use.iloc[:,top_features];
 	x_all_top.to_csv(filepath+'/slurm.log/x_all_top.txt',sep='\t',header=True,index_col=True);
-#endif
 
-######################################################################
+#endif
 
 ######################################################################
 # summarize and record classifier results			   
@@ -320,19 +256,17 @@ with open(PIK,"wb") as f:
 # SAVE AUROC 
 fid = open(filepath+'/auroc.txt','a');
 fid.write(str(numperm)+'\t'+str(cv_auroc_p)         +'\t'+str(cv_auroc_s)         + \
-                       '\t'+str(training_auroc_p)   +'\t'+str(training_auroc_s)   + \
-		       '\t'+str(validation_auroc_p) +'\t'+str(validation_auroc_s) + \
  		       '\t'+str(np.mean(_auroc_p))  +'\t'+str(np.mean(_auroc_s))  +'\n')
 fid.close()
 
 # SAVE MCC
 fid = open(filepath+'/acc.txt','a');
-fid.write(str(numperm)+'\t'+str(cv_acc)+'\t'+str(training_acc)+'\t'+str(validation_acc)+'\t'+str(np.mean(_acc))+'\n')
+fid.write(str(numperm)+'\t'+str(cv_acc)+'\t'+str(np.mean(_acc))+'\n')
 fid.close()
 
 # LOG SUCCESSFUL COMPLETION OF ITERATION
 fid = open(filepath+'/mcc.txt','a');
-fid.write(str(numperm)+'\t'+str(cv_mcc)+'\t'+str(training_mcc)+'\t'+str(validation_mcc)+'\t'+str(np.mean(_mcc))+'\n')
+fid.write(str(numperm)+'\t'+str(cv_mcc)+'\t'+str(np.mean(_mcc))+'\n')
 fid.close()
 
 ##########################################################

@@ -34,24 +34,18 @@ summary_pnl = pd.DataFrame(columns=['AvgEmpMetric','AvgNullMetric','NumEmpIterat
 if metric=="auroc":
 	if   roc_frame == "probas":
 		idx_p1 = 0;
-		idx_p2 = 4	
 	elif roc_frame == "scores":
 		idx_p1 = 1;
-		idx_p2 = 5
 	elif roc_frame == "mean_probas":
-		idx_p1 = 6;
-		idx_p2 = 4
+		idx_p1 = 2;
 	elif roc_frame == "mean_scores":
-		idx_p1 = 7;
-		idx_p2 = 5;
+		idx_p1 = 3;
 	#endif
 elif metric[0:4]=="mean":
 	idx_p1 = 3;
-	idx_p2 = 2;
 	metric = metric.split('_')[-1];
 else:
 	idx_p1 = 0;
-	idx_p2 = 2;
 #endif
 
 for nf in range(1,501):
@@ -59,7 +53,7 @@ for nf in range(1,501):
 	if os.path.isfile(empirical):
 		if os.stat(empirical).st_size != 0:
 			nf_summ = pd.read_csv(empirical,sep='\t',header=None,index_col=0);
-			summary_pnl.loc[nf,'AvgEmpMetric']     = nf_summ.iloc[0,idx_p1]
+			summary_pnl.loc[nf,'AvgEmpMetric']     =      np.mean(nf_summ.iloc[0,idx_p1])
 			summary_pnl.loc[nf,'NumEmpIterations'] = len(np.where(nf_summ.iloc[:,idx_p1])[0]); 
 			empPipeOne = nf_summ.iloc[0,idx_p1];
 		#endif
@@ -68,10 +62,10 @@ for nf in range(1,501):
 	if os.path.isfile(permutation):
 		if os.stat(permutation).st_size != 0:
 			nf_summ = pd.read_csv(permutation,sep='\t',header=None,index_col=0);
-			summary_pnl.loc[nf,'AvgNullMetric']     = np.mean(nf_summ.iloc[:,idx_p1])
+			summary_pnl.loc[nf,'AvgNullMetric']     =      np.mean(nf_summ.iloc[:,idx_p1])
 			summary_pnl.loc[nf,'NumNullIterations'] = len(np.where(nf_summ.iloc[:,idx_p1])[0]);
 			summary_pnl.loc[nf,'EmpMetricPvalue']   = float(len(np.where(nf_summ.iloc[:,idx_p1]>empPipeOne)[0]));
-			summary_pnl.loc[nf,'EmpMetricPvalue']  /= (len(np.where(nf_summ.iloc[:,idx_p1])[0])+1);
+			summary_pnl.loc[nf,'EmpMetricPvalue']  /=      (len(np.where(nf_summ.iloc[:,idx_p1])[0])+1);
 		#endif
 	#endif
 
