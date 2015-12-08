@@ -70,7 +70,8 @@ for nf in range(1,501):
 			nf_summ = pd.read_csv(permutation,sep='\t',header=None,index_col=0);
 			summary_pnl.loc[nf,'AvgNullMetric']     = np.mean(nf_summ.iloc[:,idx_p1])
 			summary_pnl.loc[nf,'NumNullIterations'] = len(np.where(nf_summ.iloc[:,idx_p1])[0]);
-			summary_pnl.loc[nf,'EmpMetricPvalue']   = float(len(np.where(nf_summ.iloc[:,idx_p1]>empPipeOne)[0]))/(len(np.where(nf_summ.iloc[:,idx_p1])[0])+1);
+			summary_pnl.loc[nf,'EmpMetricPvalue']   = float(len(np.where(nf_summ.iloc[:,idx_p1]>empPipeOne)[0]));
+			summary_pnl.loc[nf,'EmpMetricPvalue']  /= (len(np.where(nf_summ.iloc[:,idx_p1])[0])+1);
 		#endif
 	#endif
 
