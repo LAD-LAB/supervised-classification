@@ -299,13 +299,26 @@ if include_otus==1:
 # summarize and record classifier results			   
 ##########################################################
 
+# (cv_scores,   cv_probas)   pooled decision_function scores and predict_proba probabilities respectively
+# (cv_predicts, cv_trues)    pooled classifier predictions of labels and actual labels respectively
+# (cv_auroc_s,  cv_auroc_p)  Areas under the ROC curve computed with pooled cv_scores/cv_probas respectively and cv_trues
+# (_auroc_s,    _auroc_p)    Areas under the ROC curve for each classifier validation iterations (does not pool scores/probas across iterations)
+
 # PICKLE CLASSIFIER RESULTS
-# topickle = ['scores_all','probas_all','predict_all','tlabels_all','auroc','features_tally'];			
-# PIK = filepath+'/slurm.log/'+str(numperm)+'.output.pickle';
-# with open(PIK,"wb") as f:
-# 	pickle.dump(topickle,f)
-# 	for value in topickle:
-# 		pickle.dump([scores_all, probas_all, predict_all,tlabels_all,auroc,features_tally],f)   
+topickle = ['cv_scores',   'cv_probas',  \ 
+            'cv_predicts', 'cv_trues',   \
+            'cv_auroc_s',  'cv_auroc_p', \
+            '_auroc_s',    '_auroc_p'];
+
+PIK = filepath+'/slurm.log/itr.'+str(numperm)+'.pickle';
+with open(PIK,"wb") as f:
+	pickle.dump(topickle,f)
+	for value in topickle:
+		pickle.dump([cv_scores,   cv_probas, \
+     			     cv_predicts, cv_trues,  \
+    	  		     cv_auroc_s,  cv_auroc_s,
+   			     _auroc_s,    _auroc_p], \
+      		           f)   
 
 # SAVE AUROC 
 fid = open(filepath+'/auroc.txt','a');
