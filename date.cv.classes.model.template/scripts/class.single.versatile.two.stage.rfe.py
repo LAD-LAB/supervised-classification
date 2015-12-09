@@ -262,7 +262,7 @@ with open(PIK,"wb") as f:
 	pickle.dump(topickle,f)
 	for value in topickle:
 		pickle.dump([cv_scores,   cv_probas,              \
-     			     cv_predicts, cv_trues,  cv_test_ix,  \
+     			     cv_predicts, cv_trues,  cv_tests_ix,  \
    			     _auroc_s,    _auroc_p],              \
       		           f)   
 
