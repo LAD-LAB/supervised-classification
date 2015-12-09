@@ -253,8 +253,8 @@ if include_otus==1:
 # (_auroc_s,    _auroc_p)    Areas under the ROC curve for each classifier validation iterations (does not pool scores/probas across iterations)
 
 # PICKLE CLASSIFIER RESULTS
-topickle = ['cv_scores',   'cv_probas',               \
-            'cv_predicts', 'cv_trues', 'cv_tests_ix'  \
+topickle = ['cv_scores',   'cv_probas',                \
+            'cv_predicts', 'cv_trues', 'cv_tests_ix',  \
             '_auroc_s',    '_auroc_p'];
 
 PIK = filepath+'/slurm.log/itr.'+str(numperm)+'.pickle';
