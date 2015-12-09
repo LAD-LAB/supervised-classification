@@ -164,13 +164,17 @@ def subset_data(list_of_criteria,mapping_df,features_df):
     
 #####################################
 
-def SVM_RFE_soft_two_stage(arg_ext_cv,x,y,coarse_1,coarse_2,coarse_step_1,coarse_step_2,fine_step,arg_int_cv,clf,frequency_cutoff,normalize,static_features,include_otus,include_static):
-
-
-    cv = arg_ext_cv
+def SVM_RFE_soft_two_stage(**kwargs):
+    
+    cv,arg_int_cv,clf                     = [kwargs.get(varb) for varb in ['arg_ext_cv','arg_int_cv','clf']];
+    x,y,static_features                   = [kwargs.get(varb) for varb in ['x','y','static_features']];
+    coarse_1,coarse_2                     = [kwargs.get(varb) for varb in ['coarse_1','coarse_2']];
+    coarse_step_1,coarse_step_2,fine_step = [kwargs.get(varb) for varb in ['coarse_step_1','coarse_step_2','fine_step']];
+    frequency_cutoff,normalize            = [kwargs.get(varb) for varb in ['frequency_cutoff','normalize']]; 
+    include_otus,include_static           = [kwargs.get(varb) for varb in ['include_otus','include_static']];  
 
     # initialize
-    _trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(10)]
+    _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)]
 
     rfe1    = RFE(estimator=clf,n_features_to_select=coarse_1,step=coarse_step_1)  
     rfe2    = RFE(estimator=clf,n_features_to_select=coarse_2,step=coarse_step_2)  
@@ -225,7 +229,8 @@ def SVM_RFE_soft_two_stage(arg_ext_cv,x,y,coarse_1,coarse_2,coarse_step_1,coarse
  	_predicts += list(predicts);
 	_scores   += list(scores);
 	_trues    += list(trues);
-
+	_tests_ix += list(test);
+    
         if len(test)>2:
 		auroc_p, auroc_s   = (roc_auc_score(trues,probas),    roc_auc_score(trues,scores));
         	accuracy, matthews = (accuracy_score(trues,predicts), matthews_corrcoef(trues,predicts)); 
@@ -240,4 +245,4 @@ def SVM_RFE_soft_two_stage(arg_ext_cv,x,y,coarse_1,coarse_2,coarse_step_1,coarse
 		print "acc=%0.4f"   % accuracy
 		print "mcc=%0.4f"   % matthews
 		
-    return _trues,_probas,_predicts,_scores,_auroc_p,_auroc_s,_acc,_mcc
+    return _tests_ix,_trues,_predicts,_probas,_scores,_auroc_p,_auroc_s,_acc,_mcc

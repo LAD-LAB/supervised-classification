@@ -181,12 +181,25 @@ print 'fine_steps\t', fine_steps
 print 'CVCLFS,CLFS\t',CVCLFS,CLFS
 print 'normalize\t',normalize
 
-cv_trues,cv_probas,cv_predicts,cv_scores,_auroc_p,_auroc_s,_acc,_mcc = SVM_RFE_soft_two_stage(cross_validation,x_all,y_all,\
-											       num_features_1,num_features_2,\
-											       coarse_steps_1,coarse_steps_2,fine_steps,internal_cv,\
-											       CVCLFS,frequency_cutoff,normalize,clinical_df,\
-											       include_otus,include_static);
-                                                             
+args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
+				           x = x_all,\
+					   y = y_all,\
+		             static_features = clinical_df,\
+			            coarse_1 = num_features_1,\
+				    coarse_2 = num_features_2,\
+			       coarse_step_1 = coarse_steps_1,\
+			       coarse_step_2 = coarse_steps_2,\
+                                   fine_step = fine_steps,\
+                                  arg_int_cv = internal_cv,\
+				         clf = CVCLFS,\
+			    frequency_cutoff = frequency_cutoff,\
+			           normalize = normalize,\
+			        include_otus = include_otus,\
+  			      include_static = include_static);
+
+
+cv_tests_ix,cv_trues,cv_predicts,cv_probas,cv_scores,_auroc_p,_auroc_s,_acc,_mcc = [arg for arg in args_out]; 
+
 fpr_p,tpr_p,thresh_p = roc_curve(np.ravel(cv_trues),cv_probas);
 fpr_s,tpr_s,thresh_s = roc_curve(np.ravel(cv_trues),cv_scores);
 
