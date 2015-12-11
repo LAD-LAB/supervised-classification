@@ -55,3 +55,58 @@ def grabClassModelFitFromPickle(PicklePath):
 
 	#returned items are dictionaries
 	return trues_dict, scores_dict, probas_dict
+
+#####################################
+
+class ClassifierPerformance(object):
+	"""The performance of a classifier as evaluated with ROC curves and other classification metrics
+
+	Attributes:
+		name: A string represeting teh classifiers name
+	"""
+
+	def __init__(self,y_true,y_pred,y_fit):
+		"""Return a ClassifierPerformance object"""
+
+		self.y_true = y_true;
+		self.y_pred = y_pred;
+		self.y_fit  = y_fit;
+
+	def roc(self):
+		"""Return fpr, tpr, and auc"""
+
+		fpr, tpr, thresholds = roc_curve(self.y_true,self.y_fit)
+
+		self.fpr = fpr;
+		self.tpr = tpr;
+
+		return self
+
+	def accuracy_score(self):
+		"""Return accuracy score"""
+
+		self.acc = accuracy_score(self.y_true,self.y_pred)
+	
+		return self
+
+	def matthews_score(self):
+		"""Return Matthew's correlation coefficient"""
+
+		self.mcc = matthews_corrcoef(self.y_true,self.y_pred)
+
+		return self
+
+	def Metrics(self):
+		"""Return all classifier metrics: auc, accuracy, and matthew's."""
+
+		roc = self.roc();
+		acc = self.accuracy_score().acc;
+		mcc = self.matthews_score().mcc;
+
+		self.auc = auc(roc.fpr,roc.tpr);
+		self.acc = acc;
+		self.mcc = mcc;
+
+		return self
+
+
