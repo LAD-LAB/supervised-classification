@@ -22,6 +22,7 @@ import \
     random, \
     time, \
     sys, \
+    imp, \
     os
     
 #####################################
@@ -74,12 +75,12 @@ class ClassifierPerformance(object):
 		"""Return all classifier metrics: auc, accuracy, and matthew's."""
 
 		roc = self.roc();
-		acc = self.accuracy_score().acc;
-		mcc = self.matthews_score().mcc;
+		#acc = self.accuracy_score().acc;
+		#mcc = self.matthews_score().mcc;
 
 		self.auc = auc(roc.fpr,roc.tpr);
-		self.acc = acc;
-		self.mcc = mcc;
+		#self.acc = acc;
+		#self.mcc = mcc;
 
 		return self
 
@@ -116,13 +117,15 @@ def bootstrappedConfidenceIntervals(BS_metric,alpha):
 	sorted_BS_metric = np.array(BS_metric);
 	sorted_BS_metric.sort()
 
-	lowerPercentile = float(alpha)/2;
-	upperPercentile = 1-float(alpha)/2;
+	lowerPercentile  = float(alpha)/2;
+	upperPercentile  = 1-float(alpha)/2;
+	medianPercentile = (0.50);
 
-	confidence_lower = sorted_BS_metric[int(lowerPercentile * len(sorted_BS_metric))];
-	confidence_upper = sorted_BS_metric[int(upperPercentile * len(sorted_BS_metric))];
-
-	return confidence_lower, confidence_upper
+	confidence_lower  = sorted_BS_metric[int(lowerPercentile * len(sorted_BS_metric))];
+	confidence_upper  = sorted_BS_metric[int(upperPercentile * len(sorted_BS_metric))];
+	confidence_median = sorted_BS_metric[int(medianPercentile * len(sorted_BS_metric))];
+ 
+	return confidence_lower, confidence_median, confidence_upper
   	             
 #####################################
 
@@ -133,22 +136,24 @@ def grabClassModelFitFromPickle(PicklePath):
 	pfid = open(PicklePath,'rb');
 
 	iJar = pickle.load(pfid); # items in Jar
-	pJar - pickle.load(pfid); # pickles in Jar
+	pJar = pickle.load(pfid); # pickles in Jar
 
-	cv_tests_ix,cv_trues,cv_scores,cv_probas = [np.where([i==varb for i in iJar])[0][0] for varb in ["cv_tests_ix","cv_trues","cv_scores","cv_probas"]];
+	cv_tests_ix,cv_trues,cv_scores,cv_probas,cv_predicts = [np.where([i==varb for i in iJar])[0][0] for varb in ["cv_tests_ix","cv_trues","cv_scores","cv_probas","cv_predicts"]];
 
 	trues  = [(x,y) for x,y in zip(pJar[cv_tests_ix],pJar[cv_trues])];
 	scores = [(x,y) for x,y in zip(pJar[cv_tests_ix],pJar[cv_scores])];
 	probas = [(x,y) for x,y in zip(pJar[cv_tests_ix],pJar[cv_probas])];
+	preds  = [(x,y) for x,y in zip(pJar[cv_tests_ix],pJar[cv_predicts])];
 
-	trues_dict, scores_dict, probas_dict = [{} for ii in range(3)];
+	trues_dict, scores_dict, probas_dict, predicts_dict = [{} for ii in range(4)];
 	
 	trues_dict.update([ii for ii in trues]);
 	scores_dict.update([ii for ii in scores]);
 	probas_dict.update([ii for ii in probas]);
+	predicts_dict.update([ii for ii in preds]);
 
 	#returned items are dictionaries
-	return trues_dict, scores_dict, probas_dict
+	return trues_dict, scores_dict, probas_dict, predicts_dict
 
 #####################################
 
