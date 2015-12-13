@@ -231,15 +231,15 @@ y_holdout_df.to_csv(txt_y_holdout_df,sep='\t',header=True);
 y_all.to_csv(txt_y_all,sep='\t',header=True);
 
 # SAVE LABELS ARRAY 
-#for perm in range(numperm):	
-#	pi_in  = y_holdin_df;
-#	pi_out = y_holdout_df;
-#	pi_all = y_all;
-#	if shuffle==1:	
-#		np.random.shuffle(pi_in);
-#	pi_in.to_csv(filepath+'/slurm.log/y.in.'+str(perm)+'.txt',sep='\t',header=True);
-#	pi_out.to_csv(filepath+'/slurm.log/y.out.'+str(perm)+'.txt',sep='\t',header=True);
-#	pi_all.to_csv(filepath+'/slurm.log/y.all.'+str(perm)+'.txt',sep='\t',header=True);
+for perm in range(numperm):	
+	pi_in  = y_holdin_df;
+	pi_out = y_holdout_df;
+	pi_all = y_all;
+	if shuffle==1:	
+		np.random.shuffle(pi_in);
+		pi_in.to_csv(filepath+'/slurm.log/y.in.'+str(perm)+'.txt',sep='\t',header=True);
+		pi_out.to_csv(filepath+'/slurm.log/y.out.'+str(perm)+'.txt',sep='\t',header=True);
+		pi_all.to_csv(filepath+'/slurm.log/y.all.'+str(perm)+'.txt',sep='\t',header=True);
 
 ##########################################################
 # distribute and run jobs	   
@@ -254,9 +254,9 @@ fid.write('#SBATCH --array=0-'+str(numperm-1)+'%180\n\n');
 fid.write('source /home/lad44/davidlab/users/fsm/cholera/virtual_python_cholera/bin/activate\n\n');
 fid.write('out_path='          +filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.out\n');
 fid.write('err_path='          +filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.err\n\n');
-fid.write('y_holdin_df='       +txt_y_holdin_df        +' \n');#+filepath+'/slurm.log/y.in.$SLURM_ARRAY_TASK_ID.txt'  +' \n');
-fid.write('y_holdout_df='      +txt_y_holdout_df       +' \n');#+filepath+'/slurm.log/y.out.$SLURM_ARRAY_TASK_ID.txt' +' \n');
-fid.write('y_all_df='          +txt_y_all              +' \n');#+filepath+'/slurm.log/y.all.$SLURM_ARRAY_TASK_ID.txt' +' \n');
+fid.write('y_holdin_df='       +filepath+'/slurm.log/y.in.$SLURM_ARRAY_TASK_ID.txt'  +' \n');
+fid.write('y_holdout_df='       +filepath+'/slurm.log/y.out.$SLURM_ARRAY_TASK_ID.txt' +' \n');
+fid.write('y_all_df='          +filepath+'/slurm.log/y.all.$SLURM_ARRAY_TASK_ID.txt' +' \n');
 fid.write('x_holdin_df='       +txt_x_holdin_df        +' \n');
 fid.write('x_holdout_df='      +txt_x_holdout_df       +' \n');
 fid.write('x_all_df='          +txt_x_all              +' \n');
@@ -268,14 +268,12 @@ fid.write('simname='           +simname                +' \n');
 fid.write('params='            +params                 +' \n');
 fid.write('num_features='      +str(num_features_2)    +' \n');
 fid.write('pickle_model='      +str(pickle_model)      +' \n');
-fid.write('shuffle='           +str(shuffle)           +' \n');
-fid.write('numperm='	       +'$SLURM_ARRAY_TASK_ID' +' \n');
-fid.write('myRandSeed='        +str(seedint)          +'\n\n');
+fid.write('myRandSeed='        +str(seedint)+'\n\n');
 main_cmd = 'srun -o $out_path -e $err_path python '
 main_cmd+=  pypath+'/class.single.versatile.two.stage.rfe.py ';
 main_cmd+= '$y_holdin_df $y_holdout_df $y_all_df ';
 main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_holdin_norm_df $x_holdout_norm_df $x_static_df ';
-main_cmd+= '$filepath $simname $params $num_features $pickle_model $shuffle $numperm $myRandSeed\n\n';
+main_cmd+= '$filepath $simname $params $num_features $pickle_model $myRandSeed\n\n';
 fid.write(main_cmd);
 fid.write('echo $SLURM_ARRAY_JOB_ID > '+filepath+'/'+simname+'.job');
 fid.close()

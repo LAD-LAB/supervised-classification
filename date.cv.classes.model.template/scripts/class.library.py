@@ -168,12 +168,21 @@ def SVM_RFE_soft_two_stage(**kwargs):
     
     cv,arg_int_cv,clf                     = [kwargs.get(varb) for varb in ['arg_ext_cv','arg_int_cv','clf']];
     x,y,static_features                   = [kwargs.get(varb) for varb in ['x','y','static_features']];
-    coarse_1,coarse_2                     = [kwargs.get(varb) for varb in ['coarse_1','coarse_2']];
-    coarse_step_1,coarse_step_2,fine_step = [kwargs.get(varb) for varb in ['coarse_step_1','coarse_step_2','fine_step']];
-    frequency_cutoff,normalize            = [kwargs.get(varb) for varb in ['frequency_cutoff','normalize']]; 
-    include_otus,include_static           = [kwargs.get(varb) for varb in ['include_otus','include_static']];  
-    shuffle                               = [kwargs.get(varb) for varb in ['shuffle']];
+    coarse_1,coarse_2                     = [int(kwargs.get(varb)) for varb in ['coarse_1','coarse_2']];
+    coarse_step_1,coarse_step_2,fine_step = [int(kwargs.get(varb)) for varb in ['coarse_step_1','coarse_step_2','fine_step']];
+    frequency_cutoff                      = [float(kwargs.get(varb)) for varb in ['frequency_cutoff']][0]; 
+    include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
+    shuffle,normalize                     = [int(kwargs.get(varb)) for varb in ['shuffle','normalize']];
 
+    print 'num_features\t',coarse_1,' then ',coarse_2
+    print 'coarse steps\t',coarse_step_1,' then ',coarse_step_2
+    print 'fine steps\t',fine_step
+    print 'frequency_cutoff\t',frequency_cutoff 
+    print '(include_otus,include_static)\t(',include_otus,',',include_static,')'
+    print 'suffle\t',shuffle
+  
+
+    print shuffle
     # initialize
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)]
 
@@ -184,10 +193,12 @@ def SVM_RFE_soft_two_stage(**kwargs):
     for train, test in cv:
         cnt+=1; print cnt,
         x_train,x_test,y_train,y_test = split_only(x,y,train,test);
-	
-	if shuffle==1:
-		np.random.shuffle(y_train);
 
+	print 'np.sum(y_train.iloc[0:10])',np.sum(y_train.iloc[0:10])
+	if shuffle==1:
+		np.random.shuffle(y_train.values);
+		print 'shuffle:\tYES!\n';
+		print 'np.sum(y_train.iloc[0:10])',np.sum(y_train.iloc[0:10]);
 
 	#######################################################################
 	#Filter data based on frequency of presence of each feature across model samples

@@ -184,6 +184,7 @@ print 'coarse_steps\t',coarse_steps_1,coarse_steps_2
 print 'fine_steps\t', fine_steps
 print 'CVCLFS,CLFS\t',CVCLFS,CLFS
 print 'normalize\t',normalize
+print 'shuffle\t',shuffle
 
 args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 				           x = x_all,\
