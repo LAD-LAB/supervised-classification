@@ -21,7 +21,7 @@ txt_taxa_level_map=$prefix/data/taxa_level_map.txt
 txt_mapping=$prefix/data/smic.study.mapping.txt
 txt_clinical=$prefix/data/smic.study.clinical.data.txt
 num_features=
-numperm=5
+numperm=100
 shuffle=1
 pickle_model=0
 
