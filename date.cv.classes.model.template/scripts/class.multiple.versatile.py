@@ -268,12 +268,14 @@ fid.write('simname='           +simname                +' \n');
 fid.write('params='            +params                 +' \n');
 fid.write('num_features='      +str(num_features_2)    +' \n');
 fid.write('pickle_model='      +str(pickle_model)      +' \n');
-fid.write('myRandSeed='        +str(seedint)+'\n\n');
+fid.write('shuffle='           +str(shuffle)           +' \n');
+fid.write('numperm='	       +'$SLURM_ARRAY_TASK_ID' +' \n');
+fid.write('myRandSeed='        +str(seedint)          +'\n\n');
 main_cmd = 'srun -o $out_path -e $err_path python '
 main_cmd+=  pypath+'/class.single.versatile.two.stage.rfe.py ';
 main_cmd+= '$y_holdin_df $y_holdout_df $y_all_df ';
 main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_holdin_norm_df $x_holdout_norm_df $x_static_df ';
-main_cmd+= '$filepath $simname $params $num_features $pickle_model $myRandSeed\n\n';
+main_cmd+= '$filepath $simname $params $num_features $pickle_model $shuffle $numperm $myRandSeed\n\n';
 fid.write(main_cmd);
 fid.write('echo $SLURM_ARRAY_JOB_ID > '+filepath+'/'+simname+'.job');
 fid.close()

@@ -51,8 +51,9 @@
 # params                = sys.argv[12]; parameter file 
 # num_features_2        = int(sys.argv[13]); target number of features in predictive model
 # pickle_model          = int(sys.argv[14]); 1="pickle select model output", 0="don't pickle anything"
-# numperm		= int(sys.argv[15]); model iteration number
-# myRandSeed            = int(sys.argv[16]); integer for seeding numpy random generator
+# shuffle               = int(sys.argv[15]); 1="shuffle labels of training data", 0="don't shuffle anything"
+# numperm		= int(sys.argv[16]); model iteration number
+# myRandSeed            = int(sys.argv[17]); integer for seeding numpy random generator
 
 # KEY
 # ** these text file must include header of feature names and index_col of subject/sample IDs
@@ -119,8 +120,9 @@ simname               = sys.argv[11];      print 'simname\t',               simn
 params                = sys.argv[12];      print 'parameter_file\t',        params 
 num_features_2        = int(sys.argv[13]); print 'num_features_2\t',        num_features_2
 pickle_model          = int(sys.argv[14]); print 'pickle_model\t',          pickle_model
-numperm               = int(sys.argv[15]);
-myRandSeed            = int(sys.argv[16]); print 'myRandsed\t',             myRandSeed
+shuffle               = int(sys.argv[15]); print 'shuffle\t',               shuffle
+numperm               = int(sys.argv[16]); print 'numperm\t',		    numperm
+myRandSeed            = int(sys.argv[17]); print 'myRandsed\t',             myRandSeed
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
