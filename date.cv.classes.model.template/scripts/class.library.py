@@ -172,7 +172,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
     coarse_step_1,coarse_step_2,fine_step = [kwargs.get(varb) for varb in ['coarse_step_1','coarse_step_2','fine_step']];
     frequency_cutoff,normalize            = [kwargs.get(varb) for varb in ['frequency_cutoff','normalize']]; 
     include_otus,include_static           = [kwargs.get(varb) for varb in ['include_otus','include_static']];  
-    shuffle                               = [kwargs.get(varb) for varb in ['shuffle'];
+    shuffle                               = [kwargs.get(varb) for varb in ['shuffle']];
 
     # initialize
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)]
