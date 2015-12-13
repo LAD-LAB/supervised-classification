@@ -79,7 +79,7 @@ if len(sys.argv)>3:     # if you select auroc, you also need to define the under
 summary_pnl = pd.DataFrame(columns=['Vanilla_Mean_Emp_Metric','Vanilla_Mean_Null_Metric','Vanilla_Mean_Emp_Metric_Pvalue',\
 				    'Pooled_Estimates_Emp_Metric','Pooled_Estimates_Null_Metric','Pooled_Estimates_Emp_Metric_Pvalue',\
 			            'Num_Emp_Iterations','Num_Null_Iterations',\
-				    'Average_Estimates_Emp_Metric','Emp_Metric_Lower_Bound','Emp_Metric_Median','Emp_Metric_Upper_Bound']);
+				    'Average_Estimates_Emp_Metric','Average_Estimates_Emp_Metric_Lower_Bound','Average_Estimates_Emp_Metric_Median','Average_Estimates_Emp_Metric_Upper_Bound']);
 
 if metric=="auroc":
 	if   roc_frame == "probas":
@@ -101,7 +101,7 @@ for nf in range(1,501):
 		if os.stat(empirical).st_size != 0:
 			nf_summ = pd.read_csv(empirical,sep='\t',header=None,index_col=0);
 			summary_pnl.loc[nf,'Vanilla_Mean_Emp_Metric']     =      np.mean(nf_summ.iloc[0,idx_p2]);
-			summary_pnl.lcp[nf,'Pooled_Estimates_Emp_Metric'] =      np.mean(nf_summ.iloc[0,idx_p1]);
+			summary_pnl.loc[nf,'Pooled_Estimates_Emp_Metric'] =      np.mean(nf_summ.iloc[0,idx_p1]);
 			summary_pnl.loc[nf,'Num_Emp_Iterations']          = len(np.where(nf_summ.iloc[:,idx_p1])[0]); 
 			Vanilla_Mean_Emp_Metric     = nf_summ.iloc[0,idx_p2];
 			Pooled_Estimates_Emp_Metric = nf_summ.iloc[0,idx_p1];
@@ -117,7 +117,7 @@ for nf in range(1,501):
 		if os.path.isfile(empirical):
 			
 			# initialization
-			n_bootstraps = 1000;
+			n_bootstraps = 3000;
 			BS_auc_, BS_acc_, BS_mcc_                = [[] for ii in range(3)];
 			trues_df, scores_df, probas_df, preds_df = [pd.DataFrame() for ii in range(4)]; 
 			
