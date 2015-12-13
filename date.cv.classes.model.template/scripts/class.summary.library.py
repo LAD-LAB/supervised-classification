@@ -97,7 +97,7 @@ def bootstrapClassifierFit(y_true,y_pred,y_fit,n_bootstraps,stratify=True):
 		if stratify:
 			pos_ix  = np.random.choice(np.where(y_true==1)[0],size=np.sum(y_true==1),replace=True);
 			neg_ix  = np.random.choice(np.where(y_true==0)[0],size=np.sum(y_true==0),replace=True);
-			indices = np.concatenate([pos_ix,neg_ix]).;
+			indices = np.concatenate([pos_ix,neg_ix]);
 		else:
 			indices = np.random_integers(0,len(y_fit)-1,len(y_fit));
 	
@@ -119,8 +119,8 @@ def bootstrappedConfidenceIntervals(BS_metric,alpha):
 	lowerPercentile = float(alpha)/2;
 	upperPercentile = 1-float(alpha)/2;
 
-	confidence_lower = sorted_BS_metric[int(lowerPercentile * len(sorted_BS_metric)];
-	confidence_upper = sorted_BS_metric[int(upperPercentile * len(sorted_BS_metric)];
+	confidence_lower = sorted_BS_metric[int(lowerPercentile * len(sorted_BS_metric))];
+	confidence_upper = sorted_BS_metric[int(upperPercentile * len(sorted_BS_metric))];
 
 	return confidence_lower, confidence_upper
   	             

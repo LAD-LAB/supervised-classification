@@ -172,6 +172,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
     coarse_step_1,coarse_step_2,fine_step = [kwargs.get(varb) for varb in ['coarse_step_1','coarse_step_2','fine_step']];
     frequency_cutoff,normalize            = [kwargs.get(varb) for varb in ['frequency_cutoff','normalize']]; 
     include_otus,include_static           = [kwargs.get(varb) for varb in ['include_otus','include_static']];  
+    shuffle                               = [kwargs.get(varb) for varb in ['shuffle'];
 
     # initialize
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)]
@@ -182,7 +183,10 @@ def SVM_RFE_soft_two_stage(**kwargs):
     cnt = 0;
     for train, test in cv:
         cnt+=1; print cnt,
-        x_train,x_test,y_train,y_test = split_only(x,y,train,test)
+        x_train,x_test,y_train,y_test = split_only(x,y,train,test);
+	
+	if shuffle==1:
+		np.random.shuffle(y_train);
 
 
 	#######################################################################

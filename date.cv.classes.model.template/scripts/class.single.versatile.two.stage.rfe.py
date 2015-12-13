@@ -195,7 +195,8 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 			    frequency_cutoff = frequency_cutoff,\
 			           normalize = normalize,\
 			        include_otus = include_otus,\
-  			      include_static = include_static);
+  			      include_static = include_static,\
+				     shuffle = shuffle);
 
 
 cv_tests_ix,cv_trues,cv_predicts,cv_probas,cv_scores,_auroc_p,_auroc_s,_acc,_mcc = [arg for arg in args_out]; 
@@ -208,63 +209,65 @@ cv_auroc_s     = auc(fpr_s,tpr_s);
 
 cv_acc         = accuracy_score(np.ravel(cv_trues),cv_predicts);
 cv_mcc         = matthews_corrcoef(np.ravel(cv_trues),cv_predicts);
- 
-#######################################################################################
-##FINAL MODEL DESCRIPTION: Run classifier on all samples and record selected features
-#######################################################################################
 
-if normalize==1:
-	x_use = x_all_norm_df;
-else: 
-	x_use = x_all;
-#endif
+if shuffle==0: 
 
-################################################################################
-#Filter data based on frequency of presence of each feature across model samples
-#################################################################################
-bfd = pd.DataFrame(binarize(x_all),index=x_all.index,columns=x_all.keys())
-dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape[0]))[0]]
+	#######################################################################################
+	##FINAL MODEL DESCRIPTION: Run classifier on all samples and record selected features
+	#######################################################################################
+	
+	if normalize==1:
+		x_use = x_all_norm_df;
+	else: 
+		x_use = x_all;
+	#endif
+	
+	################################################################################
+	#Filter data based on frequency of presence of each feature across model samples
+	#################################################################################
+	bfd = pd.DataFrame(binarize(x_all),index=x_all.index,columns=x_all.keys())
+	dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape[0]))[0]]
+	
+	x_use  = x_use.loc[:,dense_features]
+	x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
+	
+	if include_otus==1:
+		rfe1 = RFE(estimator=CVCLFS,n_features_to_select=num_features_1,step=coarse_steps_1)
+		rfe2 = RFE(estimator=CVCLFS,n_features_to_select=num_features_2,step=coarse_steps_2)
+	
+		coarse_selector_1 = rfe1.fit(x_use,y_all);
+		coarse_selector_2 = rfe2.fit(x_use.iloc[:,coarse_selector_1.support_],y_all)
+	
+		top_features       = np.where(coarse_selector_1.support_)[0][np.where(coarse_selector_2.support_)[0]];
+		top_features_names = x_use.keys()[top_features];
+		print 'top_features',top_features_names.values
+	
+		x_all_top = x_use.iloc[:,top_features];
+		x_all_top.to_csv(filepath+'/slurm.log/x_all_top.txt',sep='\t',header=True,index_col=True);
+	
+	#endif
 
-x_use  = x_use.loc[:,dense_features]
-x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
-
-if include_otus==1:
-	rfe1 = RFE(estimator=CVCLFS,n_features_to_select=num_features_1,step=coarse_steps_1)
-	rfe2 = RFE(estimator=CVCLFS,n_features_to_select=num_features_2,step=coarse_steps_2)
-
-	coarse_selector_1 = rfe1.fit(x_use,y_all);
-	coarse_selector_2 = rfe2.fit(x_use.iloc[:,coarse_selector_1.support_],y_all)
-
-	top_features       = np.where(coarse_selector_1.support_)[0][np.where(coarse_selector_2.support_)[0]];
-	top_features_names = x_use.keys()[top_features];
-	print 'top_features',top_features_names.values
-
-	x_all_top = x_use.iloc[:,top_features];
-	x_all_top.to_csv(filepath+'/slurm.log/x_all_top.txt',sep='\t',header=True,index_col=True);
-
-#endif
-
-######################################################################
-# summarize and record classifier results			   
-##########################################################
-
-# (cv_scores,   cv_probas)   pooled decision_function scores and predict_proba probabilities respectively
-# (cv_predicts, cv_trues)    pooled classifier predictions of labels and actual labels respectively
-# (_auroc_s,    _auroc_p)    Areas under the ROC curve for each classifier validation iterations (does not pool scores/probas across iterations)
-
-# PICKLE CLASSIFIER RESULTS
-topickle = ['cv_scores',   'cv_probas',                \
-            'cv_predicts', 'cv_trues', 'cv_tests_ix',  \
-            '_auroc_s',    '_auroc_p'];
-
-PIK = filepath+'/slurm.log/itr.'+str(numperm)+'.pickle';
-with open(PIK,"wb") as f:
-	pickle.dump(topickle,f)
-	for value in topickle:
-		pickle.dump([cv_scores,   cv_probas,              \
-     			     cv_predicts, cv_trues,  cv_tests_ix,  \
-   			     _auroc_s,    _auroc_p],              \
-      		           f)   
+	######################################################################
+	# summarize and record classifier results			   
+	##########################################################
+	
+	# (cv_scores,   cv_probas)   pooled decision_function scores and predict_proba probabilities respectively
+	# (cv_predicts, cv_trues)    pooled classifier predictions of labels and actual labels respectively
+	# (_auroc_s,    _auroc_p)    Areas under the ROC curve for each classifier validation iterations (does not pool scores/probas across iterations)
+	
+	# PICKLE CLASSIFIER RESULTS
+	topickle = ['cv_scores',   'cv_probas',                \
+	            'cv_predicts', 'cv_trues', 'cv_tests_ix',  \
+	            '_auroc_s',    '_auroc_p'];
+	
+	PIK = filepath+'/slurm.log/itr.'+str(numperm)+'.pickle';
+	with open(PIK,"wb") as f:
+		pickle.dump(topickle,f)
+		for value in topickle:
+			pickle.dump([cv_scores,   cv_probas,              \
+	     			     cv_predicts, cv_trues,  cv_tests_ix,  \
+	   			     _auroc_s,    _auroc_p],              \
+	      		           f)   
 
 # SAVE AUROC 
 fid = open(filepath+'/auroc.txt','a');
