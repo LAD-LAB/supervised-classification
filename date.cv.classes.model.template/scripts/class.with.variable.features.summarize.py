@@ -33,7 +33,7 @@ if len(sys.argv)>3:     # if you select auroc, you also need to define the under
 	roc_frame = sys.argv[3]   # {probas, scores, mean_probas, mean_scores}
 #endif
 
-summary_pnl = pd.DataFrame(columns=['EmpMetricLowerBound','EmpMetricMedian','EmpMetricUpperBound','AveEmpMetric','AvgNullMetric','NumEmpIterations','NumNullIterations','EmpMetricPvalue'])
+summary_pnl = pd.DataFrame(columns=['EmpMetricLowerBound','EmpMetricMedian','EmpMetricUpperBound','AvgEmpMetric','AvgNullMetric','NumEmpIterations','NumNullIterations','EmpMetricPvalue'])
 
 if metric=="auroc":
 	if   roc_frame == "probas":
