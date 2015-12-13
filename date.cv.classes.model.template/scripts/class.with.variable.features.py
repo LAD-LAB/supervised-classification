@@ -45,6 +45,7 @@ permute  = int(sys.argv[2]);
 model_iterations = [150];#+range(10,201,10); 
 run_type         = ['empirical','permutations'];
 
+cnt=0;
 for nf in model_iterations:
 	for rt in range(0,1+permute):
 		# if permute==0, then the for loop will only build slurm scripts for running empirical models
@@ -63,6 +64,8 @@ for nf in model_iterations:
 					new_file.write(line)
 			new_file.close()
 			os.system('sbatch '+filepath+'/results/slurm.files/class.two.stage.rfe.'+str(nf)+'.'+run+'.slurm');
-	time.sleep(900)
+	cnt +=1;
+	if cnt < len(model_iterations):
+		time.sleep(900)
 	
 
