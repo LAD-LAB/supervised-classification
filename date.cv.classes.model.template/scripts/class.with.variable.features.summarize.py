@@ -105,7 +105,8 @@ for nf in range(1,501):
 			summary_pnl.loc[nf,'EmpMetricUpperBound'] = confidence_upper; 
 			summary_pnl.loc[nf,'EmpMetricMedian']     = confidence_median;
 	
-			print("Original ROC area: "+("%0.4f" % (roc_auc_score(y_true,y_score))))
+			print("Orginal mean ROC area: "+("%0.4f" % (empPipeOne)))
+			print("Original pooled ROC area: "+("%0.4f" % (roc_auc_score(y_true,y_score))))
 			print("Confidence interval for the score: ["+("%0.4f" % confidence_lower)+" - "+("%0.4f" % confidence_upper)+"]")
 	permutation = filepath + '/results/class.two.stage.rfe.'+str(nf)+'.permutations/'+metric+'.txt';
 	if os.path.isfile(permutation):
