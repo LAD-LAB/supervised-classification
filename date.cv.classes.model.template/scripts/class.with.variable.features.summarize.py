@@ -62,8 +62,7 @@ for nf in range(1,501):
 			empPipeOne = nf_summ.iloc[0,idx_p1];
 		#endif
 	#endif
-	if metric == "auroc":
-	
+	if metric == "auroc":	
 		empirical = filepath + '/results/class.two.stage.rfe.'+str(nf)+'.empirical/slurm.log/itr.0.pickle';
 		if os.path.isfile(empirical):
 			n_bootstraps = 1000;

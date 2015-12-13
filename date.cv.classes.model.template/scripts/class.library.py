@@ -194,11 +194,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
         cnt+=1; print cnt,
         x_train,x_test,y_train,y_test = split_only(x,y,train,test);
 
-	print 'np.sum(y_train.iloc[0:10])',np.sum(y_train.iloc[0:10])
 	if shuffle==1:
 		np.random.shuffle(y_train.values);
-		print 'shuffle:\tYES!\n';
-		print 'np.sum(y_train.iloc[0:10])',np.sum(y_train.iloc[0:10]);
 
 	#######################################################################
 	#Filter data based on frequency of presence of each feature across model samples
