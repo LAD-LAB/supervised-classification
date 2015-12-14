@@ -77,7 +77,7 @@ filepath  = sys.argv[1] 	  # parent directory for classifier runs
 metric    = sys.argv[2] 	  # either of {auroc, acc, mcc} which correspond to area under ROC curve, accuracy, and matthews's correlation coefficient scores
 if len(sys.argv)>3:     	  # if you select auroc, you also need to define the underlying numbers to compute it. either of the following
 	roc_frame = sys.argv[3]   # {probas, scores, mean_probas, mean_scores}
-	bootstrap = sys.argv[4]
+	bootstrap = int(sys.argv[4])
 #endif
 
 summary_pnl = pd.DataFrame(columns=['Mean',\

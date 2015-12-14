@@ -42,7 +42,7 @@ permute  = int(sys.argv[2]);
 # PRIMARY CODE
 ##############################################################i
 
-model_iterations = [150];#+range(10,201,10); 
+model_iterations = [25,50,75,100,125,150,175,200];#+range(10,201,10); 
 run_type         = ['empirical','permutations'];
 
 cnt=0;
@@ -66,6 +66,6 @@ for nf in model_iterations:
 			os.system('sbatch '+filepath+'/results/slurm.files/class.two.stage.rfe.'+str(nf)+'.'+run+'.slurm');
 	cnt +=1;
 	if cnt < len(model_iterations):
-		time.sleep(900)
+		time.sleep(10)
 	
 
