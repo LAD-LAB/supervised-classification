@@ -31,6 +31,7 @@ filepath  = sys.argv[1] # parent directory for classifier runs
 metric    = sys.argv[2] # either of {auroc, acc, mcc} which correspond to area under ROC curve, accuracy, and matthews's correlation coefficient scores
 if len(sys.argv)>3:     # if you select auroc, you also need to define the underlying numbers to compute it. either of the following
 	roc_frame = sys.argv[3]   # {probas, scores, mean_probas, mean_scores}
+	bootstrap = sys.argv[4]
 #endif
 
 #########################################################
@@ -78,8 +79,8 @@ if len(sys.argv)>3:     # if you select auroc, you also need to define the under
 #summary_pnl = pd.DataFrame(columns=['EmpMetricLowerBound','EmpMetricMedian','EmpMetricUpperBound','AvgPooledEmpMetric','AvgEmpMetric','AvgPooledEmpMetric','AvgNullMetric','NumEmpIterations','NumNullIterations','EmpMetricPvalue','PooledEmpMetricPvalue'])
 summary_pnl = pd.DataFrame(columns=['Vanilla_Mean_Emp_Metric','Vanilla_Mean_Null_Metric','Vanilla_Mean_Emp_Metric_Pvalue',\
 				    'Pooled_Estimates_Emp_Metric','Pooled_Estimates_Null_Metric','Pooled_Estimates_Emp_Metric_Pvalue',\
-			            'Num_Emp_Iterations','Num_Null_Iterations',\
-				    'Average_Estimates_Emp_Metric','Average_Estimates_Emp_Metric_Lower_Bound','Average_Estimates_Emp_Metric_Median','Average_Estimates_Emp_Metric_Upper_Bound']);
+				    'Average_Estimates_Emp_Metric','Average_Estimates_Emp_Metric_Lower_Bound','Average_Estimates_Emp_Metric_Median','Average_Estimates_Emp_Metric_Upper_Bound', \
+			            'Num_Emp_Iterations','Num_Null_Iterations']);
 
 if metric=="auroc":
 	if   roc_frame == "probas":
@@ -112,7 +113,7 @@ for nf in range(1,501):
 	# COMPUTE BOOTSTRAPPED ESTIMATES OF CLASSIFIER PERFORMANCE
 	##########################################################
 	
-	if metric == "auroc":	
+	if bootstrap == 1:	
 		empirical = filepath + '/results/class.two.stage.rfe.'+str(nf)+'.empirical/slurm.log/itr.0.pickle';
 		if os.path.isfile(empirical):
 			
@@ -172,8 +173,10 @@ for nf in range(1,501):
 			summary_pnl.loc[nf,'Vanilla_Mean_Emp_Metric_Pvalue']     /=      (len(np.where(nf_summ.iloc[:,idx_p2])[0])+1);
 			summary_pnl.loc[nf,'Pooled_Estimates_Emp_Metric_Pvalue']  = float(len(np.where(nf_summ.iloc[:,idx_p1]>Pooled_Estimates_Emp_Metric)[0]));
 			summary_pnl.loc[nf,'Pooled_Estimates_Emp_Metric_Pvalue'] /=      (len(np.where(nf_summ.iloc[:,idx_p1])[0])+1);
+#			summary_pnl.loc[nf,'Pooled_Estimates_Emp_Metric_Pvalue']  = ("%0.4f" summary_pnl.loc[nf,'Pooled_Estm
 		#endif
 	#endif
-	
-summary_pnl.to_csv(filepath+'/summary/class.two.stage.rfe.summary.'+metric+'.txt',sep='\t',header=True,index_col=True)
+
+summary_pnl.iloc[:,:-2].astype(float)
+summary_pnl.to_csv(filepath+'/summary/class.two.stage.rfe.summary.'+metric+'.txt',sep='\t',header=True,index_col=True,float_format='%0.4f')
 
