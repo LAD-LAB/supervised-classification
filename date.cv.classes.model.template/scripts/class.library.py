@@ -16,10 +16,6 @@
 # split_only
 #       splits a feature matrix and lables into training and testing subsets
 #
-# standard_normalize_training_data_and_transform_validation_data(df)
-#	for each variable (column) in a training dataframe, identify normal scale (mu and sigma)
-#   then, transform accordingly the training, validation, and full data
-#
 # subset_data
 #	identifies samples that match a list of user-defined critiera. requires a mapping file.
 #     
@@ -49,7 +45,7 @@ import \
 from sklearn.cross_validation   import StratifiedKFold, LeaveOneOut, StratifiedShuffleSplit 
 from sklearn.feature_selection  import RFECV, RFE, SelectPercentile, SelectKBest
 from sklearn.grid_search        import GridSearchCV
-from sklearn.preprocessing      import StandardScaler, binarize
+from sklearn.preprocessing      import StandardScaler, MinMaxScaler, binarize
 from sklearn.metrics            import auc, roc_curve, roc_auc_score, accuracy_score, matthews_corrcoef
 
 #####################################
@@ -122,24 +118,6 @@ def split_only(x,y,train,test):
  
 #####################################
 
-def standard_normalize_training_data_and_transform_validation_data(training_df,validation_df):
-	
-	normal_scale       = StandardScaler().fit(training_df);
-	training_norm_df   = normal_scale.transform(training_df);
-	training_norm_df   = pd.DataFrame(training_norm_df, \
-									  index   = training_df.index, \
-									  columns = training_df.keys());
-	
-	validation_norm_df = normal_scale.transform(validation_df);
-	validation_norm_df = pd.DataFrame(validation_norm_df, \
-	                                  index   = validation_df.index, \
-	                                  columns = validation_df.keys());
-	
-	return training_norm_df, validation_norm_df
-	
-
-#####################################
-
 def subset_data(list_of_criteria,mapping_df,features_df):
     # list_of_criteria is a dictionary of variables and their desired values
     # mapping_df must include the variables from teh list_of_criteria 
@@ -172,14 +150,16 @@ def SVM_RFE_soft_two_stage(**kwargs):
     coarse_step_1,coarse_step_2,fine_step = [int(kwargs.get(varb)) for varb in ['coarse_step_1','coarse_step_2','fine_step']];
     frequency_cutoff                      = [float(kwargs.get(varb)) for varb in ['frequency_cutoff']][0]; 
     include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
-    shuffle,normalize                     = [int(kwargs.get(varb)) for varb in ['shuffle','normalize']];
+    shuffle,scale                         = [int(kwargs.get(varb)) for varb in ['shuffle','scale']];
+    scaler                                = [kwargs.get(varb) for varb in ['scaler']][0];
 
     print 'num_features\t',coarse_1,' then ',coarse_2
     print 'coarse steps\t',coarse_step_1,' then ',coarse_step_2
     print 'fine steps\t',fine_step
     print 'frequency_cutoff\t',frequency_cutoff 
     print '(include_otus,include_static)\t(',include_otus,',',include_static,')'
-    print 'suffle\t',shuffle
+    print 'shuffle\t',shuffle
+    print 'scaler\t',scaler
   
 
     print shuffle
@@ -207,8 +187,13 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	x_test  = x_test.loc[:,dense_features]
 
 
-	if normalize==1:
-        	x_train, x_test = standard_normalize_training_data_and_transform_validation_data(x_train,x_test);
+	if scale==1:
+        	
+		x_train_scale = scaler.fit(x_train);
+		x_train       = pd.DataFrame(x_train_scale.transform(x_train), \
+					     index=x_train.index, columns=x_train.keys());
+		x_test        = pd.DataFrame(x_train_scale.transform(x_test),  \
+					     index=x_test.index,  columns=x_test.keys());
       	
 	if include_otus==1: 
 	 	# Narrow down  full list of features to 100                                     

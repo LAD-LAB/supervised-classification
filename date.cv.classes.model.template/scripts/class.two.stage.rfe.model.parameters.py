@@ -41,7 +41,7 @@ coarse_steps_1   = 100;
 coarse_steps_2   = 1;
 fine_steps       = 1;
 internal_cv      = 10;
-normalize        = 1;
+scale            = 1;
 include_otus     = 1;
 include_static   = 0;
 
@@ -51,6 +51,10 @@ include_static   = 0;
 #CVS = 'holdout_validation';
 #CVS = 'SKF.10';
 CVS = 'SSS.300.10';
+
+# CHOOSE SCALER (only applies if normalize==1)
+SCL = 'Normal';
+#SCL = 'MinMax';
 
 ## CHOOSE CLASSIFIER
 

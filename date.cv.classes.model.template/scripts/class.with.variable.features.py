@@ -42,7 +42,7 @@ permute  = int(sys.argv[2]);
 # PRIMARY CODE
 ##############################################################i
 
-model_iterations = [25,50,75,100,125,150,175,200];#+range(10,201,10); 
+model_iterations = [50];#[25,50,75,100,125,150,175,200];#+range(10,201,10); 
 run_type         = ['empirical','permutations'];
 
 cnt=0;

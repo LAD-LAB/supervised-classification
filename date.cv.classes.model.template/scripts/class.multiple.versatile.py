@@ -171,20 +171,14 @@ x_all.shape,y_all.shape
 ##SAVE FEATURE MATRIX (before filtering for less frequent features
 #######################################################################
 
-x_holdin_norm_df,x_holdout_norm_df = standard_normalize_training_data_and_transform_validation_data(x_holdin_df.copy(),x_holdout_df.copy());
-
 # SAVE FEATURE MATRIX (should be same for all jobs in array)
 txt_x_holdin_df       = filepath+'/slurm.log/x_holdin_df.txt';
 txt_x_holdout_df      = filepath+'/slurm.log/x_holdout_df.txt';
 txt_x_all             = filepath+'/slurm.log/x_all.txt';
-txt_x_holdin_norm_df  = filepath+'/slurm.log/x_holdin_norm_df.txt';
-txt_x_holdout_norm_df = filepath+'/slurm.log/x_holdout_norm_df.txt';
 
 x_holdin_df.to_csv(txt_x_holdin_df,sep='\t',header=True,index_col=True);
 x_holdout_df.to_csv(txt_x_holdout_df,sep='\t',header=True,index_col=True);
 x_all.to_csv(txt_x_all,sep='\t',header=True,index_col=True);
-x_holdin_norm_df.to_csv(txt_x_holdin_norm_df,sep='\t',header=True,index_col=True);
-x_holdout_norm_df.to_csv(txt_x_holdout_norm_df,sep='\t',header=True,index_col=True);
 
 #######################################################################
 ##Filter data based on frequency of presence of each feature across model samples
@@ -195,8 +189,6 @@ dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff
 
 x_holdin_df    = x_holdin_df.loc[:,dense_features]
 x_holdout_df   = x_holdout_df.loc[:,dense_features]
-
-x_holdin_norm_df,x_holdout_norm_df = standard_normalize_training_data_and_transform_validation_data(x_holdin_df.copy(),x_holdout_df.copy());
 
 ##############################################################
 # initialization for tracking of jobs' completion and results 				   
@@ -215,8 +207,6 @@ for filetype in ['/auroc.txt','/acc.txt','/mcc.txt']:
 txt_x_holdin_df       = filepath+'/slurm.log/x_holdin_df_dense.txt';
 txt_x_holdout_df      = filepath+'/slurm.log/x_holdout_df_dense.txt';
 txt_x_all             = filepath+'/slurm.log/x_all_dense.txt';
-txt_x_holdin_norm_df  = filepath+'/slurm.log/x_holdin_norm_df_dense.txt';
-txt_x_holdout_norm_df = filepath+'/slurm.log/x_holdout_norm_df_dense.txt';
 txt_y_holdin_df       = filepath+'/slurm.log/y_holdin_df.txt';
 txt_y_holdout_df      = filepath+'/slurm.log/y_holdout_df.txt';
 txt_y_all             = filepath+'/slurm.log/y_all.txt'; 
@@ -224,22 +214,9 @@ txt_y_all             = filepath+'/slurm.log/y_all.txt';
 x_holdin_df.to_csv(txt_x_holdin_df,sep='\t',header=True,index_col=True);
 x_holdout_df.to_csv(txt_x_holdout_df,sep='\t',header=True,index_col=True);
 x_all.to_csv(txt_x_all,sep='\t',header=True,index_col=True);
-x_holdin_norm_df.to_csv(txt_x_holdin_norm_df,sep='\t',header=True,index_col=True);
-x_holdout_norm_df.to_csv(txt_x_holdout_norm_df,sep='\t',header=True,index_col=True);
 y_holdin_df.to_csv(txt_y_holdin_df,sep='\t',header=True);
 y_holdout_df.to_csv(txt_y_holdout_df,sep='\t',header=True);
 y_all.to_csv(txt_y_all,sep='\t',header=True);
-
-# SAVE LABELS ARRAY 
-#for perm in range(numperm):	
-#	pi_in  = y_holdin_df;
-#	pi_out = y_holdout_df;
-#	pi_all = y_all;
-#	if shuffle==1:	
-#		np.random.shuffle(pi_in);
-#		pi_in.to_csv(filepath+'/slurm.log/y.in.'+str(perm)+'.txt',sep='\t',header=True);
-#		pi_out.to_csv(filepath+'/slurm.log/y.out.'+str(perm)+'.txt',sep='\t',header=True);
-#		pi_all.to_csv(filepath+'/slurm.log/y.all.'+str(perm)+'.txt',sep='\t',header=True);
 
 ##########################################################
 # distribute and run jobs	   
@@ -260,8 +237,6 @@ fid.write('y_all_df='          +txt_y_all              +' \n');#+filepath+'/slur
 fid.write('x_holdin_df='       +txt_x_holdin_df        +' \n');
 fid.write('x_holdout_df='      +txt_x_holdout_df       +' \n');
 fid.write('x_all_df='          +txt_x_all              +' \n');
-fid.write('x_holdin_norm_df='  +txt_x_holdin_norm_df   +' \n');
-fid.write('x_holdout_norm_df=' +txt_x_holdout_norm_df  +' \n');
 fid.write('x_static_df='       +txt_clinical_df        +' \n');
 fid.write('filepath='          +filepath               +' \n');
 fid.write('simname='           +simname                +' \n');
@@ -274,7 +249,7 @@ fid.write('myRandSeed='        +str(seedint)+'\n\n');
 main_cmd = 'srun -o $out_path -e $err_path python '
 main_cmd+=  pypath+'/class.single.versatile.two.stage.rfe.py ';
 main_cmd+= '$y_holdin_df $y_holdout_df $y_all_df ';
-main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_holdin_norm_df $x_holdout_norm_df $x_static_df ';
+main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_static_df ';
 main_cmd+= '$filepath $simname $params $num_features $pickle_model $shuffle $numperm $myRandSeed\n\n';
 fid.write(main_cmd);
 fid.write('echo $SLURM_ARRAY_JOB_ID > '+filepath+'/'+simname+'.job');

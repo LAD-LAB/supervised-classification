@@ -12,8 +12,6 @@
 # Given the following:
 #  x_holdin_df
 #  x_holdout_df
-#  x_holdin_norm_df
-#  x_holdout_norm_df
 #  CVS
 #  CVCLFS
 #  CLFS
@@ -21,7 +19,6 @@
 #  coarse_steps     
 #  fine_steps       
 #  internal_cv      
-#  normalize        
 #  include_otus
 #  include_static
 #  pickle_model
@@ -43,8 +40,6 @@
 # txt_x_holdin_df       = sys.argv[4]; path to hold in subset of dynamic features matirx
 # txt_x_holdout_df      = sys.argv[5]; path to hold out subset of dynamic featuers matrix
 # txt_x_all             = sys.argv[6]; path to whole data set of dynamic features matrix
-# txt_x_holdin_norm_df  = sys.argv[7]; same as txt_x_holdin_df but standard normalized features **
-# txt_x_holdout_norm_df = sys.argv[8]; same as txt_x_holdout_df but standard normalized features **
 # txt_clinical_df       = sys.argv[9]; path to whole data set of static features (here clinical features) **
 # filepath              = sys.argv[10]; filepath 
 # simname               = sys.argv[11]; name of model 
@@ -112,17 +107,15 @@ txt_y_all             = sys.argv[3];       print 'txt_y_all\t',             txt_
 txt_x_holdin_df       = sys.argv[4];       print 'txt_x_holdin_df\t',       txt_x_holdin_df
 txt_x_holdout_df      = sys.argv[5];       print 'txt_x_holdout_df\t',      txt_x_holdout_df
 txt_x_all             = sys.argv[6];       print 'txt_x_all\t',             txt_x_all
-txt_x_holdin_norm_df  = sys.argv[7];       print 'txt_x_holdin_norm_df\t',  txt_x_holdin_norm_df
-txt_x_holdout_norm_df = sys.argv[8];       print 'txt_x_holdout_norm_df\t', txt_x_holdout_norm_df
-txt_clinical_df       = sys.argv[9];       print 'txt_clinical_df\t',       txt_clinical_df
-filepath              = sys.argv[10];      print 'filepath\t',              filepath
-simname               = sys.argv[11];      print 'simname\t',               simname
-params                = sys.argv[12];      print 'parameter_file\t',        params 
-num_features_2        = int(sys.argv[13]); print 'num_features_2\t',        num_features_2
-pickle_model          = int(sys.argv[14]); print 'pickle_model\t',          pickle_model
-shuffle               = int(sys.argv[15]); print 'shuffle\t',               shuffle
-numperm               = int(sys.argv[16]); print 'numperm\t',		    numperm
-myRandSeed            = int(sys.argv[17]); print 'myRandsed\t',             myRandSeed
+txt_clinical_df       = sys.argv[7];       print 'txt_clinical_df\t',       txt_clinical_df
+filepath              = sys.argv[8];      print 'filepath\t',              filepath
+simname               = sys.argv[9];      print 'simname\t',               simname
+params                = sys.argv[10];      print 'parameter_file\t',        params 
+num_features_2        = int(sys.argv[11]); print 'num_features_2\t',        num_features_2
+pickle_model          = int(sys.argv[12]); print 'pickle_model\t',          pickle_model
+shuffle               = int(sys.argv[13]); print 'shuffle\t',               shuffle
+numperm               = int(sys.argv[14]); print 'numperm\t',		    numperm
+myRandSeed            = int(sys.argv[15]); print 'myRandsed\t',             myRandSeed
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
@@ -141,20 +134,10 @@ random.seed(myRandSeed)
 x_holdin_df       = pd.read_csv(txt_x_holdin_df,       sep='\t',header=0,index_col=0);
 x_holdout_df      = pd.read_csv(txt_x_holdout_df,      sep='\t',header=0,index_col=0);
 x_all             = pd.read_csv(txt_x_all,             sep='\t',header=0,index_col=0);
-x_holdin_norm_df  = pd.read_csv(txt_x_holdin_norm_df,  sep='\t',header=0,index_col=0);
-x_holdout_norm_df = pd.read_csv(txt_x_holdout_norm_df, sep='\t',header=0,index_col=0);
 y_holdin_df       = pd.read_csv(txt_y_holdin_df,       sep='\t',header=0,index_col=0);
-y_holdout_df      = pd.read_csv(txt_y_holdout_df,      sep='\t',header=0,index_col=0);
+
 y_all             = pd.read_csv(txt_y_all,             sep='\t',header=0,index_col=0);
 clinical_df       = pd.read_csv(txt_clinical_df,       sep='\t',header=0,index_col=0);
-
-
-#######################################################################
-#Filter data based on frequency of presence of each feature across model samples
-#######################################################################
-
-x_all_norm_df, x_all_norm_df = standard_normalize_training_data_and_transform_validation_data(\
-                                              x_all,x_all)
 
 #######################################################################
 ##Cross-validated model training to approximate generalized performance and feature importances
@@ -172,18 +155,23 @@ elif    CVS[0:3]=="SKF":
 elif    CVS=="holdout_validation":
             cross_validation = [(np.array(range(0,x_holdin_df.shape[0])), np.array(range(x_holdin_df.shape[0],x_all.shape[0])))]; 
 
+if   SCL[0:6]=='Normal':
+	scaler = StandardScaler();	
+elif SCL[0:6]=='MinMax':
+	scaler = MinMaxScaler();
+#endif
+
 print 'holdin\t',   x_holdin_df.shape,  y_holdin_df.shape
 print 'holdout\t',  x_holdout_df.shape, y_holdout_df.shape
 print 'all\t',      x_all.shape,        y_all.shape
 print 'clinical\t', clinical_df.shape
 
 print 'cross_validaiton\t',cross_validation
-print 'x_all_norm_df,y_all\t',x_all_norm_df.shape,y_all.shape
 print 'num_features\t',num_features_1,num_features_2
 print 'coarse_steps\t',coarse_steps_1,coarse_steps_2
 print 'fine_steps\t', fine_steps
 print 'CVCLFS,CLFS\t',CVCLFS,CLFS
-print 'normalize\t',normalize
+print 'scaler\t',scaler
 print 'shuffle\t',shuffle
 
 args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
@@ -198,7 +186,8 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
                                   arg_int_cv = internal_cv,\
 				         clf = CVCLFS,\
 			    frequency_cutoff = frequency_cutoff,\
-			           normalize = normalize,\
+			               scale = scale;\
+    	 			      scaler = scaler,\
 			        include_otus = include_otus,\
   			      include_static = include_static,\
 				     shuffle = shuffle);
@@ -221,8 +210,10 @@ if shuffle==0:
 	##FINAL MODEL DESCRIPTION: Run classifier on all samples and record selected features
 	#######################################################################################
 	
-	if normalize==1:
-		x_use = x_all_norm_df;
+	if scale==1:
+		x_use_scale = scaler.fit(x_all);
+		x_use = pd.DataFrame(x_use_scale.transform(x_use), \
+				     index=x_use.index, columns=x_use.keys());
 	else: 
 		x_use = x_all;
 	#endif
