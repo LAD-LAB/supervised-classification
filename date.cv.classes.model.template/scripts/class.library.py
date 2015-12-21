@@ -163,9 +163,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
     include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
     shuffle,scale                         = [int(kwargs.get(varb)) for varb in ['shuffle','scale']];
     scaler                                = [kwargs.get(varb) for varb in ['scaler']][0];
-    otu_taxa_map                          = [kwargs.get(Varb) for varb in ['otu_taxa_map']][0];    
-
-    otu_taxa_map = pd.read_csv(otu_taxa_map,sep='\t',header=0,index_col=0);
+    otu_taxa_map                          = [kwargs.get(varb) for varb in ['otu_taxa_map']][0];    
 
     print 'num_features\t',coarse_1,' then ',coarse_2
     print 'coarse steps\t',coarse_step_1,' then ',coarse_step_2
@@ -190,17 +188,26 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	if shuffle==1:
 		np.random.shuffle(y_train.values);
 
-	#######################################################################
+	#################################################################################
 	#Filter data based on frequency of presence of each feature across model samples
-	#######################################################################
+	#################################################################################
 	bfd = pd.DataFrame(binarize(x_train),index=x_train.index,columns=x_train.keys())
 	dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_train.shape[0]))[0]]
-
+	
+	print 'thresholding'
+	print '(train,test)\t',x_train.shape,x_test.shape,'-->',
 	x_train = x_train.loc[:,dense_features]
 	x_test  = x_test.loc[:,dense_features]
+	print x_train.shape,x_test.shape
 
-	# remove non-informative redundnat clades
+	#################################################################################
+	#Remove non-informative redundnat clades
+	#################################################################################
+	print 'pruning'
+	print '(train,test)\t',x_train.shape,x_test.shape,'-->',
 	x_train = dropNonInformativeClades(x_train,otu_taxa_map)	
+	x_test  = x_test.loc[:,x_train.keys()];	
+	print x_train.shape,x_test.shape
 
 	if scale==1:
         	

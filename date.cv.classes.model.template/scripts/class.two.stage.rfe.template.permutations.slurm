@@ -26,4 +26,4 @@ numperm=100
 shuffle=1
 pickle_model=0
 
-srun -o $txt_out -e $txt_err python $pypath/class.multiple.versatile.py $txt_params $txt_features_df $txt_taxa_level_map $otu_taxa_map $txt_mapping $txt_clinical $simpath $simname $shuffle $numperm $num_features $pickle_model
+srun -o $txt_out -e $txt_err python $pypath/class.multiple.versatile.py $txt_params $txt_features_df $txt_taxa_level_map $txt_otu_taxa_map $txt_mapping $txt_clinical $simpath $simname $shuffle $numperm $num_features $pickle_model

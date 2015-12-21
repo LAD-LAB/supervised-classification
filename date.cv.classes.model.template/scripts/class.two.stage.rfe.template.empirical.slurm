@@ -18,7 +18,7 @@ txt_err=$simpath/$simname.err
 txt_params=$prefix/scripts/class.two.stage.rfe.model.parameters.py
 txt_features_df=$prefix/data/sqrt_features_df.txt
 txt_taxa_level_map=$prefix/data/taxa_level_map.txt
-txt_otu_tax_map=$prefix/data/otu_taxa_map.txt
+txt_otu_taxa_map=$prefix/data/otu_taxa_map.txt
 txt_mapping=$prefix/data/smic.study.mapping.txt
 txt_clinical=$prefix/data/smic.study.clinical.data.txt
 num_features=
@@ -26,4 +26,4 @@ numperm=1
 shuffle=0
 pickle_model=1
 
-srun -o $txt_out -e $txt_err python $pypath/class.multiple.versatile.py $txt_params $txt_features_df $txt_taxa_level_map $otu_taxa_map $txt_mapping $txt_clinical $simpath $simname $shuffle $numperm $num_features $pickle_model
+srun -o $txt_out -e $txt_err python $pypath/class.multiple.versatile.py $txt_params $txt_features_df $txt_taxa_level_map $txt_otu_taxa_map $txt_mapping $txt_clinical $simpath $simname $shuffle $numperm $num_features $pickle_model

@@ -88,8 +88,12 @@ import sys, imp, os
 #####################################
 
 pypath = os.path.dirname(os.path.realpath(sys.argv[0]));
-foo = imp.load_source('classification_library',pypath+'/class.library.py')
+foo = imp.load_source('classification_library',pypath+'/class.library.py');
 from classification_library import *
+
+pypath = os.path.dirname(os.path.relpath(sys.argv[0]));
+foo    = imp.load_source('pruning_library',pypath+'/class.pruning.library.py');
+from pruning_library import *
 
 ##########################################################
 # seed random generator				   
@@ -228,7 +232,16 @@ if shuffle==0:
 	bfd = pd.DataFrame(binarize(x_all),index=x_all.index,columns=x_all.keys())
 	dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape[0]))[0]]
 	
-	x_use  = x_use.loc[:,dense_features]
+	print 'thresholding'
+	print x_use.shape,'-->',	
+	x_use  = x_use.loc[:,dense_features];
+	print x_use.shape
+
+	print 'pruning'
+	print x_use.shape,'-->',
+	x_use = dropNonInformativeClades(x_use,otu_taxa_map);
+	print x_use.shape
+
 	x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
 	
 	if include_otus==1:
