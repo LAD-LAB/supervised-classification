@@ -135,7 +135,7 @@ x_holdin_df       = pd.read_csv(txt_x_holdin_df,       sep='\t',header=0,index_c
 x_holdout_df      = pd.read_csv(txt_x_holdout_df,      sep='\t',header=0,index_col=0);
 x_all             = pd.read_csv(txt_x_all,             sep='\t',header=0,index_col=0);
 y_holdin_df       = pd.read_csv(txt_y_holdin_df,       sep='\t',header=0,index_col=0);
-
+y_holdout_df      = pd.read_csv(txt_y_holdout_df,      sep='\t',header=0,index_col=0);
 y_all             = pd.read_csv(txt_y_all,             sep='\t',header=0,index_col=0);
 clinical_df       = pd.read_csv(txt_clinical_df,       sep='\t',header=0,index_col=0);
 
@@ -171,7 +171,7 @@ print 'num_features\t',num_features_1,num_features_2
 print 'coarse_steps\t',coarse_steps_1,coarse_steps_2
 print 'fine_steps\t', fine_steps
 print 'CVCLFS,CLFS\t',CVCLFS,CLFS
-print 'scaler\t',scaler
+print '(scale with scaler)\t',(scale,scaler)
 print 'shuffle\t',shuffle
 
 args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
@@ -186,7 +186,7 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
                                   arg_int_cv = internal_cv,\
 				         clf = CVCLFS,\
 			    frequency_cutoff = frequency_cutoff,\
-			               scale = scale;\
+			               scale = scale,\
     	 			      scaler = scaler,\
 			        include_otus = include_otus,\
   			      include_static = include_static,\
@@ -212,8 +212,8 @@ if shuffle==0:
 	
 	if scale==1:
 		x_use_scale = scaler.fit(x_all);
-		x_use = pd.DataFrame(x_use_scale.transform(x_use), \
-				     index=x_use.index, columns=x_use.keys());
+		x_use = pd.DataFrame(x_use_scale.transform(x_all), \
+				     index=x_all.index, columns=x_all.keys());
 	else: 
 		x_use = x_all;
 	#endif

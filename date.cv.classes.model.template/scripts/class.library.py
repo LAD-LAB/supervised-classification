@@ -159,10 +159,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
     print 'frequency_cutoff\t',frequency_cutoff 
     print '(include_otus,include_static)\t(',include_otus,',',include_static,')'
     print 'shuffle\t',shuffle
-    print 'scaler\t',scaler
+    print '(scale with scaler)\t',scale,scaler
   
-
-    print shuffle
     # initialize
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)]
 

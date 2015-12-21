@@ -34,7 +34,7 @@ holdout_flag2     = {'color':[3,4],'day':[2],'Batch':[2]}
 outcomes_dict    = {1:1,2:1,3:0,4:0}
 outcomes_dict    = {1:1,2:1,3:0,4:0}
 
-frequency_cutoff = 0.50;
+frequency_cutoff = 0.10;
 
 num_features_1   = 350;
 coarse_steps_1   = 100;
