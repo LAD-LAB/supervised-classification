@@ -37,14 +37,15 @@
 # params             = sys.argv[1]; parameter file
 # txt_featues_df     = sys.argv[2]; path to bacterial features matrix file
 # txt_taxa_level_map = sys.argv[3]; path to features taxonomic level map
-# txt_mapping        = sys.argv[4]; path to samples mapping file
-# txt_clinical_df    = sys.argv[5]; path to clinical features file
-# filepath           = sys.argv[6]; path to store reulsts
-# simname            = sys.argv[7; simulation name (used for naming files)
-# shuffle            = sys.argv[8]; 1="shuffle labels", 0="don't shuffle labels"
-# numperm            = int(sys.argv[9]); "number of permutations/iterations
-# num_features_2     = int(sys.argv[10]); target number of features in predictive model
-# pickle_model       = int(sys.argv[11]); 1="pickle select model output", 0="don't pickle anything"
+# txt_otu_taxa_map   = sys.argv[4]; path to OTU-->taxonomy map
+# txt_mapping        = sys.argv[5]; path to samples mapping file
+# txt_clinical_df    = sys.argv[6; path to clinical features file
+# filepath           = sys.argv[7]; path to store reulsts
+# simname            = sys.argv[8; simulation name (used for naming files)
+# shuffle            = sys.argv[9]; 1="shuffle labels", 0="don't shuffle labels"
+# numperm            = int(sys.argv[10]); "number of permutations/iterations
+# num_features_2     = int(sys.argv[11]); target number of features in predictive model
+# pickle_model       = int(sys.argv[12]); 1="pickle select model output", 0="don't pickle anything"
 
 ##########################################################
 # CREATES/MODIFIES/REMOVES
@@ -105,14 +106,15 @@ random.seed(seedint)
 params             = sys.argv[1]; print 'params\t',params 
 txt_features_df    = sys.argv[2]; print 'txt_features_df\t',txt_features_df 
 txt_taxa_level_map = sys.argv[3]; print 'txt_taxa_level_map\t',txt_taxa_level_map
-txt_mapping        = sys.argv[4]; print 'txt_mapping\t',txt_mapping 
-txt_clinical_df    = sys.argv[5]; print 'txt_clinical\t',txt_clinical_df
-filepath           = sys.argv[6]; print 'filepath\t',filepath
-simname            = sys.argv[7]; print 'simname\t',simname
-shuffle            = int(sys.argv[8]); print 'shuffle\t',shuffle
-numperm            = int(sys.argv[9]); print 'numperm\t',numperm
-num_features_2     = int(sys.argv[10]); print 'num_features\t', num_features_2
-pickle_model       = int(sys.argv[11]); print 'pickle_model\t', pickle_model
+txt_otu_taxa_map   = sys.argv[4]; print 'txt_otu_taxa_map\t',txt_otu_taxa_map
+txt_mapping        = sys.argv[5]; print 'txt_mapping\t',txt_mapping 
+txt_clinical_df    = sys.argv[6]; print 'txt_clinical\t',txt_clinical_df
+filepath           = sys.argv[7]; print 'filepath\t',filepath
+simname            = sys.argv[8]; print 'simname\t',simname
+shuffle            = int(sys.argv[9]); print 'shuffle\t',shuffle
+numperm            = int(sys.argv[10]); print 'numperm\t',numperm
+num_features_2     = int(sys.argv[11]); print 'num_features\t', num_features_2
+pickle_model       = int(sys.argv[12]); print 'pickle_model\t', pickle_model
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
@@ -128,8 +130,9 @@ if not os.path.isdir(filepath+'/slurm.log'):
 #######################################################################
 ##Read feature matrix and feature meta-data
 #######################################################################
-features_df    = pd.read_csv(txt_features_df,sep='\t',header=0,index_col=0)
-taxa_level_map = pd.read_csv(txt_taxa_level_map,sep='\t',header=0,index_col=0)
+features_df    = pd.read_csv(txt_features_df,sep='\t',header=0,index_col=0);
+taxa_level_map = pd.read_csv(txt_taxa_level_map,sep='\t',header=0,index_col=0);
+otu_taxa_map   = pd.read_csv(txt_otu_taxa_map,sep='\t',header=0,index_col=0);
 
 #######################################################################
 ##Read sample labels.
@@ -238,6 +241,7 @@ fid.write('x_holdin_df='       +txt_x_holdin_df        +' \n');
 fid.write('x_holdout_df='      +txt_x_holdout_df       +' \n');
 fid.write('x_all_df='          +txt_x_all              +' \n');
 fid.write('x_static_df='       +txt_clinical_df        +' \n');
+fid.write('otu_taxa_map='      +txt_otu_taxa_map       +' \n');
 fid.write('filepath='          +filepath               +' \n');
 fid.write('simname='           +simname                +' \n');
 fid.write('params='            +params                 +' \n');
@@ -249,7 +253,7 @@ fid.write('myRandSeed='        +str(seedint)+'\n\n');
 main_cmd = 'srun -o $out_path -e $err_path python '
 main_cmd+=  pypath+'/class.single.versatile.two.stage.rfe.py ';
 main_cmd+= '$y_holdin_df $y_holdout_df $y_all_df ';
-main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_static_df ';
+main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_static_df $otu_taxa_map';
 main_cmd+= '$filepath $simname $params $num_features $pickle_model $shuffle $numperm $myRandSeed\n\n';
 fid.write(main_cmd);
 fid.write('echo $SLURM_ARRAY_JOB_ID > '+filepath+'/'+simname+'.job');

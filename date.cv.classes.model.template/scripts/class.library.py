@@ -36,6 +36,7 @@ import \
     random, \
     time, \
     sys, \
+    imp, \
     os
     
 #####################################
@@ -61,6 +62,16 @@ from sklearn.ensemble           import RandomForestClassifier
 #####################################
 
 from scipy.stats                import mannwhitneyu
+
+####################################
+#
+#####################################
+# additional in-house tools
+#####################################
+
+pypath = os.path.dirname(os.path.relpath(sys.argv[0]));
+foo    = imp.load_source('pruning_library',pypath+'/class.pruning.library.py');
+from pruning_library import *
 
 #####################################
 
@@ -152,6 +163,9 @@ def SVM_RFE_soft_two_stage(**kwargs):
     include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
     shuffle,scale                         = [int(kwargs.get(varb)) for varb in ['shuffle','scale']];
     scaler                                = [kwargs.get(varb) for varb in ['scaler']][0];
+    otu_taxa_map                          = [kwargs.get(Varb) for varb in ['otu_taxa_map']][0];    
+
+    otu_taxa_map = pd.read_csv(otu_taxa_map,sep='\t',header=0,index_col=0);
 
     print 'num_features\t',coarse_1,' then ',coarse_2
     print 'coarse steps\t',coarse_step_1,' then ',coarse_step_2
@@ -160,7 +174,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
     print '(include_otus,include_static)\t(',include_otus,',',include_static,')'
     print 'shuffle\t',shuffle
     print '(scale with scaler)\t',scale,scaler
-  
+    print 'otu_taxa_map.shape\t',otu_taxa_map.shape
+	
     # initialize
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)]
 
@@ -184,6 +199,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	x_train = x_train.loc[:,dense_features]
 	x_test  = x_test.loc[:,dense_features]
 
+	# remove non-informative redundnat clades
+	x_train = dropNonInformativeClades(x_train,otu_taxa_map)	
 
 	if scale==1:
         	
