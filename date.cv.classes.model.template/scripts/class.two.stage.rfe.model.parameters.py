@@ -41,6 +41,7 @@ coarse_steps_1   = 100;
 coarse_steps_2   = 1;
 fine_steps       = 1;
 internal_cv      = 10;
+transform        = 1;
 scale            = 1;
 include_otus     = 1;
 include_static   = 0;
@@ -55,6 +56,10 @@ CVS = 'SSS.300.10';
 # CHOOSE SCALER (only applies if normalize==1)
 SCL = 'Normal';
 #SCL = 'MinMax';
+
+# CHOOSE TRANSFORM
+#TSF = 'LOG';
+TSF = 'SQRT';
 
 ## CHOOSE CLASSIFIER
 

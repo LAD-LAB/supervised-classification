@@ -16,7 +16,7 @@ txt_out=$simpath/$simname.out
 txt_err=$simpath/$simname.err
 
 txt_params=$prefix/scripts/class.two.stage.rfe.model.parameters.py
-txt_features_df=$prefix/data/sqrt_features_df.txt
+txt_features_df=$prefix/data/features_df.txt
 txt_taxa_level_map=$prefix/data/taxa_level_map.txt
 txt_otu_taxa_map=$prefix/data/otu_taxa_map.txt
 txt_mapping=$prefix/data/smic.study.mapping.txt

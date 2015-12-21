@@ -161,12 +161,19 @@ elif    CVS[0:3]=="SKF":
             cross_validation = StratifiedKFold(y_all,n_folds=num_folds); 
 elif    CVS=="holdout_validation":
             cross_validation = [(np.array(range(0,x_holdin_df.shape[0])), np.array(range(x_holdin_df.shape[0],x_all.shape[0])))]; 
+#endif
 
 if   SCL[0:6]=='Normal':
 	scaler = StandardScaler();	
 elif SCL[0:6]=='MinMax':
 	scaler = MinMaxScaler();
 #endif
+
+if   TSF=="SQRT":
+	transformer = np.sqrt;
+elif TSF=="LOG":
+	transformer = np.log10;
+
 
 print 'holdin\t',   x_holdin_df.shape,  y_holdin_df.shape
 print 'holdout\t',  x_holdout_df.shape, y_holdout_df.shape
@@ -178,6 +185,7 @@ print 'num_features\t',num_features_1,num_features_2
 print 'coarse_steps\t',coarse_steps_1,coarse_steps_2
 print 'fine_steps\t', fine_steps
 print 'CVCLFS,CLFS\t',CVCLFS,CLFS
+print '(transform with transformer)\t',(transform,transformer)
 print '(scale with scaler)\t',(scale,scaler)
 print 'shuffle\t',shuffle
 
@@ -193,7 +201,9 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
                                   arg_int_cv = internal_cv,\
 				         clf = CVCLFS,\
 			    frequency_cutoff = frequency_cutoff,\
-			               scale = scale,\
+			           transform = transform,\
+  				 transformer = transformer,\
+				       scale = scale,\
     	 			      scaler = scaler,\
 			        otu_taxa_map = otu_taxa_map,\
 				include_otus = include_otus,\
@@ -213,18 +223,10 @@ cv_acc         = accuracy_score(np.ravel(cv_trues),cv_predicts);
 cv_mcc         = matthews_corrcoef(np.ravel(cv_trues),cv_predicts);
 
 if shuffle==0: 
-
+	
 	#######################################################################################
 	##FINAL MODEL DESCRIPTION: Run classifier on all samples and record selected features
 	#######################################################################################
-	
-	if scale==1:
-		x_use_scale = scaler.fit(x_all);
-		x_use = pd.DataFrame(x_use_scale.transform(x_all), \
-				     index=x_all.index, columns=x_all.keys());
-	else: 
-		x_use = x_all;
-	#endif
 	
 	################################################################################
 	#Filter data based on frequency of presence of each feature across model samples
@@ -233,14 +235,36 @@ if shuffle==0:
 	dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape[0]))[0]]
 	
 	print 'thresholding'
-	print x_use.shape,'-->',	
-	x_use  = x_use.loc[:,dense_features];
+	print x_all.shape,'-->',	
+	x_use  = x_all.loc[:,dense_features];
 	print x_use.shape
 
+	#######################################################################################
+	# Remove non informative redundant clades 
+	#######################################################################################
 	print 'pruning'
 	print x_use.shape,'-->',
 	x_use = dropNonInformativeClades(x_use,otu_taxa_map);
 	print x_use.shape
+
+	#######################################################################################
+	# Transform feature values
+	#######################################################################################
+	
+	if transform==1:
+		x_use = x_use.apply(transformer)
+
+	#######################################################################################
+	# Scale feature arrays
+	#######################################################################################
+	
+	if scale==1:
+		x_use_scale = scaler.fit(x_use);
+		x_use = pd.DataFrame(x_use_scale.transform(x_use), \
+				     index=x_use.index, columns=x_use.keys());
+	else: 
+		x_use = x_all;
+	#endif
 
 	x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
 	

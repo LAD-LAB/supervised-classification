@@ -161,8 +161,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
     coarse_step_1,coarse_step_2,fine_step = [int(kwargs.get(varb)) for varb in ['coarse_step_1','coarse_step_2','fine_step']];
     frequency_cutoff                      = [float(kwargs.get(varb)) for varb in ['frequency_cutoff']][0]; 
     include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
-    shuffle,scale                         = [int(kwargs.get(varb)) for varb in ['shuffle','scale']];
-    scaler                                = [kwargs.get(varb) for varb in ['scaler']][0];
+    shuffle,scale,transform               = [int(kwargs.get(varb)) for varb in ['shuffle','scale','transform']];
+    scaler,transformer                    = [kwargs.get(varb) for varb in ['scaler','transformer']];
     otu_taxa_map                          = [kwargs.get(varb) for varb in ['otu_taxa_map']][0];    
 
     print 'num_features\t',coarse_1,' then ',coarse_2
@@ -172,6 +172,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
     print '(include_otus,include_static)\t(',include_otus,',',include_static,')'
     print 'shuffle\t',shuffle
     print '(scale with scaler)\t',scale,scaler
+    print '(transform with transformer)\t',transform,transformer
     print 'otu_taxa_map.shape\t',otu_taxa_map.shape
 	
     # initialize
@@ -209,6 +210,18 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	x_test  = x_test.loc[:,x_train.keys()];	
 	print x_train.shape,x_test.shape
 
+	#################################################################################
+	#Transform feature values
+	#################################################################################
+
+	if transform==1:
+		x_train = x_train.apply(transformer);
+		x_test  = x_test.apply(transformer);
+
+	#################################################################################
+	#Scale feature arrays
+	#################################################################################
+	
 	if scale==1:
         	
 		x_train_scale = scaler.fit(x_train);
