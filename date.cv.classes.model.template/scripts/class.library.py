@@ -178,14 +178,18 @@ def SVM_RFE_soft_two_stage(**kwargs):
     # initialize
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)]
 
+    # initialize recursive feature elimination objects
     rfe1    = RFE(estimator=clf,n_features_to_select=coarse_1,step=coarse_step_1)  
     rfe2    = RFE(estimator=clf,n_features_to_select=coarse_2,step=coarse_step_2)  
 
     cnt = 0;
     for train, test in cv:
         cnt+=1; print cnt,
+	
+	# split data ino training and testing folds
         x_train,x_test,y_train,y_test = split_only(x,y,train,test);
 
+	# shuffle labels if requested
 	if shuffle==1:
 		np.random.shuffle(y_train.values);
 
@@ -204,6 +208,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	#################################################################################
 	#Remove non-informative redundnat clades
 	#################################################################################
+
 	print 'pruning'
 	print '(train,test)\t',x_train.shape,x_test.shape,'-->',
 	x_train = dropNonInformativeClades(x_train,otu_taxa_map)	
@@ -215,6 +220,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	#################################################################################
 
 	if transform==1:
+		print 'transforming with ',transformer
 		x_train = x_train.apply(transformer);
 		x_test  = x_test.apply(transformer);
 
@@ -223,13 +229,32 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	#################################################################################
 	
 	if scale==1:
-        	
+                print 'scaling with ',scaler
+		#print 'means of (mean,std) and (min,max) of features'
+		#print 'training matrix\t',
+		#print "(%0.3f,%0.3f)" % (np.mean(x_train.apply(np.mean,0)),np.mean(x_train.apply(np.std,0))),
+		#print "(%0.3f,%0.3f)" % (np.mean(x_train.apply(np.min,0)),np.mean(x_train.apply(np.max)))
+		#print 'testing matrix\t',
+		#print "(%0.3f,%0.3f)" % (np.mean(x_test.apply(np.mean,0)),np.std(x_test.apply(np.std,0))),	
+		#print "(%0.3f,%0.3f)" % (np.mean(x_test.apply(np.min,0)),np.std(x_test.apply(np.max,0)))	
 		x_train_scale = scaler.fit(x_train);
 		x_train       = pd.DataFrame(x_train_scale.transform(x_train), \
 					     index=x_train.index, columns=x_train.keys());
 		x_test        = pd.DataFrame(x_train_scale.transform(x_test),  \
 					     index=x_test.index,  columns=x_test.keys());
-      	
+		#print '-->'
+		#print 'training matrix\t',
+		#print "(%0.3f,%0.3f)" % (np.mean(x_train.apply(np.mean,0)),np.mean(x_train.apply(np.std,0))),	
+		#print "(%0.3f,%0.3f)" % (np.mean(x_train.apply(np.min,0)),np.mean(x_train.apply(np.max,0)))	
+		#print 'testing matrix\t',
+		#print "(%0.3f,%0.3f)" % (np.mean(x_test.apply(np.mean,0)),np.mean(x_test.apply(np.std,0))),	
+		#print "(%0.3f,%0.3f)" % (np.mean(x_test.apply(np.min,0)),np.mean(x_test.apply(np.max,0)))	
+		      	
+	#################################################################################
+	#Apply Recrusive Feature Elimination wrapped aroud a user-defined classifier
+	#################################################################################
+	
+	# use only features that are transformed with RFE
 	if include_otus==1: 
 	 	# Narrow down  full list of features to 100                                     
 	        coarse_selector_1 = rfe1.fit(x_train,y_train)  
@@ -240,13 +265,20 @@ def SVM_RFE_soft_two_stage(**kwargs):
        
 		x_train_top   = x_train.iloc[:,top_features]#.join(static_features);
 		x_test_top    = x_test.iloc[:,top_features]#.join(static_features);
-
+ 
+	# combine both features that are transformed with RFE and static unselected featuers
 	if    (include_otus==1) and (include_static==1):
 		x_train_top   = x_train_top.join(static_features);
 		x_test_top    = x_test_top.join(static_features);
+	
+	# use only static unselected features
 	elif  (include_otus==0) and (include_static==1):
 		x_train_top   = static_features.loc[x_train.index,:];
 		x_test_top    = static_features.loc[x_test.index,:];
+
+	#################################################################################
+	#Apply user-defined supervised learning classifier
+	#################################################################################
 
         # Train model using only those features 
         opt_clf         = clf.fit(x_train_top,y_train);

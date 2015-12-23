@@ -17,16 +17,6 @@
 #   given a TaxonomyDataFrame (see below function), taxonomic rank, and name of clade
 #   identify who are the children of this clade
 # 
-# HowManyChildren
-#   given a TaxonomyDataFrame (see below function), taxonomic rank, and name of clade
-#   identify how many  children does this clade have
-#
-# FullName
-#   Return the full name of a clade beginning with kingdom
-#
-# WriteName
-#   given a single row of a TaxonomyDataFrame, it returns the full name of the clade
-#
 # TaxonomyDataFrame
 #   given a matrix of samples by bacterial OTU IDs, it constructs a data frame with
 #   an index of the full taxonomic name (kingdom to OTU) in the GreenGenes format 
@@ -55,7 +45,6 @@ class taxonomy(object):
     
     def breakdown(self):
         taxa      = self.taxonomy; 
-        #taxa      = taxa.replace('_;','_na;')
         taxa_dict = dict([ii.split('__') for ii in taxa.split(';')])
         return taxa_dict
     
@@ -76,30 +65,13 @@ def GrabRelativeNode(n,relative):
          return nodes[current+1];
     elif relative=='upstream':
          return nodes[0:current];
+    elif relative=='full':
+	return nodes[0:current+1];
+    elif relative=='full_child':
+	return nodes[0:current+2];
 
-def WhoAreChildren(df,node,parent):
-    child    = GrabRelativeNode(node,'child')
-    children = set(df.loc[df.loc[:,node]==parent,child].unique())
-    children = list(children.difference([np.nan]))
-    return children
-
-def HowManyChildren(df,node,parent):
-    children = WhoAreChildren(df,node,parent);
-    return len(children)
-     
-def FullName(df,node,self,which):
-    names = GrabRelativeNode(node,'upstream');
-    names = df.loc[df.loc[:,node]==self,names].iloc[0,:]
-    if    which=='upstream':
-          return WriteName(names)
-    elif  which=='include':
-          return WriteName(names)+';'+node+'__'+self
-    
-def WriteName(df):
-    ranks = df.keys();
-    names = df.values;
-    return ";".join([r+'__'+n for r,n in zip(ranks,names)])
-    
+def WhoAreChildren(df):
+    return list(set(df.unique()).difference([np.nan]))
 
 def TaxonomyDataFrame(x,otu_map):
         
@@ -108,9 +80,8 @@ def TaxonomyDataFrame(x,otu_map):
     taxonomy_se = [];
     for microbe in x.keys():
         if (isinstance(microbe,int)) | (str(microbe).isdigit()):
-            microbe  = otu_map.loc[int(microbe),'taxonomy']+' ;otu__'+str(microbe);
+            microbe  = otu_map.loc[int(microbe),'taxonomy']+';otu__'+str(microbe);
         taxonomy = microbe
-        taxonomy = taxonomy.replace(';  ',';');
         taxonomy = pd.Series(dict([clade.split('__') for clade in taxonomy.split(';')]),name = microbe)
         taxonomy_se.append(taxonomy)
         
@@ -128,11 +99,27 @@ def dropNonInformativeClades(x,otu_map):
     taxonomy_df = TaxonomyDataFrame(x,otu_map)
 
     # Let's try to parse through each otu and see if it has any relatives at above clades. If so, we will manually create a variable name for that shared clade. 
-    for n in nodes[1:]:
-        for parent in list(set(taxonomy_df.loc[:,n].unique()).difference([np.nan])):
-            if HowManyChildren(taxonomy_df,n,parent)==1:
-                toDrop.append(FullName(taxonomy_df,GrabRelativeNode(n,'self'),parent,'include'))
+    for n in nodes[1:3]:
+	
+	full_child   = GrabRelativeNode(n,'full_child');
+	child        = GrabRelativeNode(n,'child');
+	full         = GrabRelativeNode(n,'full');
+	
+	df           = taxonomy_df.loc[:,full_child];
+	grouped_df   = df.groupby(full).groups;
 
+	for parent,household in grouped_df.iteritems():
+		parent_df = df.loc[household,child];
+		if len(WhoAreChildren(parent_df))==1:
+			toDropName = ';'.join([xx+'__'+yy for xx,yy in zip(full,parent)]);
+			#toDropName = toDropName.replace('__na;','__;');
+			#if   toDropName[-4:]=='__na':
+			#     toDropName = toDropName[:-2];
+			#endif
+			toDrop.append(toDropName);
+		#endif
+	#endif
+    #endfor
     x.drop(labels=toDrop,axis=1,inplace=True)    
-   
+#enddef   
     return x
