@@ -99,7 +99,7 @@ def dropNonInformativeClades(x,otu_map):
     taxonomy_df = TaxonomyDataFrame(x,otu_map)
 
     # Let's try to parse through each otu and see if it has any relatives at above clades. If so, we will manually create a variable name for that shared clade. 
-    for n in nodes[1:3]:
+    for n in nodes[1:]:
 	
 	full_child   = GrabRelativeNode(n,'full_child');
 	child        = GrabRelativeNode(n,'child');

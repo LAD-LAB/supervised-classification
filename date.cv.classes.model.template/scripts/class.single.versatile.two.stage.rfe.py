@@ -151,14 +151,14 @@ otu_taxa_map      = pd.read_csv(txt_otu_taxa_map,      sep='\t',header=0,index_c
 #######################################################################
 
 if      CVS[0:3]=="LOO":
-            cross_validation = LeaveOneOut(y_all.shape[0]);
+            cross_validation = LeaveOneOut(np.ravel(y_all).shape[0]);
 elif    CVS[0:3]=="SSS":
             num_iterations   = int(CVS.split('.')[1]);
             test_pct         = float(CVS.split('.')[-1])/100;
-            cross_validation = StratifiedShuffleSplit(y_all,n_iter=num_iterations,test_size=test_pct);
+            cross_validation = StratifiedShuffleSplit(np.ravel(y_all),n_iter=num_iterations,test_size=test_pct);
 elif    CVS[0:3]=="SKF":
             num_folds        = int(CVS.split('.')[1]);
-            cross_validation = StratifiedKFold(y_all,n_folds=num_folds); 
+            cross_validation = StratifiedKFold(np.ravel(y_all),n_folds=num_folds); 
 elif    CVS=="holdout_validation":
             cross_validation = [(np.array(range(0,x_holdin_df.shape[0])), np.array(range(x_holdin_df.shape[0],x_all.shape[0])))]; 
 #endif
@@ -242,6 +242,7 @@ if shuffle==0:
 	#######################################################################################
 	# Remove non informative redundant clades 
 	#######################################################################################
+
 	print 'pruning'
 	print x_use.shape,'-->',
 	x_use = dropNonInformativeClades(x_use,otu_taxa_map);
@@ -252,18 +253,26 @@ if shuffle==0:
 	#######################################################################################
 	
 	if transform==1:
+		print 'transforming with ',transformer 
 		x_use = x_use.apply(transformer)
+		print np.mean(x_use.apply(np.sum,1))
 
 	#######################################################################################
 	# Scale feature arrays
 	#######################################################################################
 	
 	if scale==1:
+		print 'scaling with ',scaler
+		#print 'means of (mean,std) and (min,max) for features',
+		#print "(%0.3f,%0.3f)" % (np.mean(x_use.apply(np.mean,0)),np.mean(x_use.apply(np.std,0))),
+		#print "(%0.3f,%0.3f)" % (np.mean(x_use.apply(np.min,0)),np.mean(x_use.apply(np.max,0)))
 		x_use_scale = scaler.fit(x_use);
 		x_use = pd.DataFrame(x_use_scale.transform(x_use), \
 				     index=x_use.index, columns=x_use.keys());
-	else: 
-		x_use = x_all;
+		#print '-->'
+		#print 'means of (mean,std) and (min,max) for features',
+		#print "(%0.3f,%0.3f)" % (np.mean(x_use.apply(np.mean,0)),np.mean(x_use.apply(np.std,0))),
+		#print "(%0.3f,%0.3f)" % (np.mean(x_use.apply(np.min,0)),np.mean(x_use.apply(np.max,0)))
 	#endif
 
 	x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
