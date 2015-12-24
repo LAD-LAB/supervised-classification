@@ -41,8 +41,8 @@ coarse_steps_1   = 100;
 coarse_steps_2   = 1;
 fine_steps       = 1;
 internal_cv      = 10;
-transform        = 1;
-scale            = 1;
+transform        = 0;
+scale            = 0;
 include_otus     = 1;
 include_static   = 0;
 
@@ -51,7 +51,7 @@ include_static   = 0;
 #CVS = 'LOO';
 #CVS = 'holdout_validation';
 #CVS = 'SKF.10';
-CVS = 'SSS.300.10';
+CVS = 'SSS.50.10';
 
 # CHOOSE SCALER (only applies if normalize==1)
 SCL = 'Normal';
@@ -63,6 +63,6 @@ TSF = 'SQRT';
 
 ## CHOOSE CLASSIFIER
 
-#CVCLFS   = SVC(kernel='linear',probability=True,shrinking=True,cache_size=2000,C=100,random_state=24289074);
+#CVCLFS   = SVC(kernel='linear',probability=True,shrinking=False,cache_size=2000,C=100,random_state=24289074);
 CVCLFS   = LogisticRegression('l2',C=100)
 CLFS     = CVCLFS;
