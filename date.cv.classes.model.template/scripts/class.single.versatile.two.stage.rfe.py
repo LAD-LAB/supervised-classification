@@ -172,7 +172,7 @@ elif SCL[0:6]=='MinMax':
 if   TSF=="SQRT":
 	transformer = np.sqrt;
 elif TSF=="LOG":
-	transformer = np.log10;
+	transformer = lambda x: np.log10(x+1e-6);
 
 
 print 'holdin\t',   x_holdin_df.shape,  y_holdin_df.shape
