@@ -122,7 +122,7 @@ foo = imp.load_source('model_parameters',params)
 from model_parameters import *
 
 # GENERATE RANDOM SEED FROM RANDOM INTEGER
-random.seed(myRandSeed)
+#random.seed(myRandSeed)
 
 # INFER ITERATION NUMBER FROM INPUT NAME FORMAT
 # numperm = txt_y_holdin_df.split('/')[-1].split('.')[2]
@@ -199,7 +199,7 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 				     shuffle = shuffle);
 
 
-cv_df_auc,cv_df_acc,cv_df_mcc,cv_df_features,df_coef = [arg for arg in args_out]; 
+cv_df_auc,cv_df_acc,cv_df_mcc,cv_df_features,cv_pnl_coef = [arg for arg in args_out]; 
 
 if shuffle==0: 
 	
@@ -209,6 +209,7 @@ if shuffle==0:
 
 	#initialize 
 	df_features = pd.DataFrame(columns=["whole"]);
+	pnl_coef    = {};
 	
 	################################################################################
 	#Filter data based on frequency of presence of each feature across model samples
@@ -259,6 +260,8 @@ if shuffle==0:
 		coarse_features  = x_use.keys()[rfe1.fit(x_use,y_all).support_];
 		x_use            = x_use.loc[:,coarse_features];
 
+		df_coef = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));		
+
 		# finely prune features one by one
 		for num_feats in range(x_use.shape[1])[::-1][:-1]:
 			print 'feature #'+str(num_feats)+'\t',			
@@ -275,8 +278,65 @@ if shuffle==0:
 
 			#transform featuer matrices
 			x_use = x_use.loc[:,features_kept];
+
+			#join non-filtered (static) features
+			if include_static==1:
+				x_use = x_use.join(static_features);
+			#endif
+			
+			#fit and test classifier with remaining features 
+			clf_fit  = clf_fit(x_use,y_all);
+			clf_eval = clf_fit.decision_function(x_use);
+			clf_pdct = clf.predict(x_use);
+
+			#compute AUC, accuracy, and MCC
+			clf_auc = roc_auc_score(y_all,clf_eval);
+			clf_acc = accuracy_score(y_all,clf_pdct);
+			clf_mcc = matthews_corrcoef(y_all,clf_pdct);
+		
+			print '==> (AUC,ACC,MCC) = (',
+			print ('%0.4f,' % clf_auc),
+			print ('%0.4f,' % clf_acc),
+			print ('%0.4f,' % clf_mcc),
+			print ')'
+
+			#record model coefficients
+			clf_coef = clf_fit.coef_[0];
+			clf_Vars = x_use.keys();
+			for varb,coef in zip(clf_vars,clf_coef):
+				df_coef.loc[varb,num_feats]=coef;
+			#endfor
+		#endfor
+
+	elif (include_otus==0) and (include_static==1):
+
+		x_use   = static_features.loc[x_use.index,:];
+		df_coef = pd.DataFrame(index=x_use.keys(),columns=['static']);
+		
+		#fit and test classifier 
+		clf_fit  = clf.fit(x_use,y_all);
+		clf_eval = clf_fit.decision_function(x_use);
+		clf_pdct = clf.predict(x_use);
+
+		#compute AUC, accuracy, and MCC
+		clf_auc  = roc_auc_score(y_all,clf_eval);
+		clf_acc  = accuracy_score(y_all,clf_pdct);
+		clf_mcc  = matthews_corrcoef(y_al,clf_pdct);
+
+		print '==> (AUC,ACC,MCC) = (',
+		print ('%0.4f,' % clf_auc),
+		print ('%0.4f,' % clf_acc),
+		print ('%0.4f,' % clf_mcc),
+		print ')'
+
+		clf_coef = clf_fit.coef_[0];
+		clf_vars = x_use.keys();
+		for varb, coef in zip(clf_vars,clf_coef):
+			df_coef.loc[varb,'static']=coef;
 		#endfor
 	#endif
+
+	pnl_coef[cnt] = df_coef;
 
 # SAVE AUROC,ACCURACY,and MCC 
 cv_df_auc.to_csv(filepath+'/slurm.log/cv_auc.'+str(numperm)+'.txt',sep='\t',header=True,index_col=True);
@@ -291,14 +351,14 @@ df_features.to_csv(filepath+'/slurm.log/features.'+str(numperm)+'.txt',sep='\t',
 
 if shuffle==0:
 	topickle = ['cv_df_auc', 'cv_df_acc', 'cv_df_mcc', \
-                    'cv_df_features', 'df_features', 'df_coef'];
+                    'cv_df_features', 'df_features', 'cv_pnl_coef', 'pnl_coef'];
 
 	PIK = filepath+'/slurm.log/itr.'+str(numperm)+'.pickle';
 	with open(PIK,"wb") as f:
 		pickle.dump(topickle,f);
 		for value in topickle:
 			pickle.dump([cv_df_auc, cv_df_acc, cv_df_mcc, \
-				     cv_df_features, df_features, df_coef],
+				     cv_df_features, df_features, cv_pnl_coef, pnl_coef],
 				  f)
 
 ##########################################################

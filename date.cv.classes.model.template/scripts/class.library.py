@@ -268,7 +268,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			if include_static==1:
 				x_train = x_train.join(static_features);
 				x_test  = x_test.join(static_features);
-			
+			#endif
+
 			# fit and test classifier with remaining featuers (store AUC)
 			clf_fit  = clf.fit(x_train,y_train);
 			clf_eval = clf_fit.decision_function(x_test);
@@ -295,12 +296,47 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			clf_vars = x_train.keys();
 			for varb,coef in zip(clf_vars,clf_coef):
 				df_coef.loc[varb,num_feats]=coef;
+			#endfor
+		#endfor
 	
 	# use only static unselected features
 	elif  (include_otus==0) and (include_static==1):
+
 		x_train   = static_features.loc[x_train.index,:];
 		x_test    = static_features.loc[x_test.index,:];
+	
+		df_coef   = pd.DataFrame(index=x_train.keys(), columns=['clinical']);
 
+		# fit and test classifier with remaining featuers (store AUC)
+		clf_fit  = clf.fit(x_train,y_train);
+		clf_eval = clf_fit.decision_function(x_test);
+		clf_pdct = clf.predict(x_test);
+
+		# compute AUC, accuracy, and MCC
+		clf_auc  = roc_auc_score(y_test,clf_eval);
+		clf_acc  = accuracy_score(y_test,clf_pdct);
+		clf_mcc  = matthews_corrcoef(y_test,clf_pdct);
+
+		# record model performance
+		df_auc.loc[num_feats,cnt] = clf_auc;
+		df_acc.loc[num_feats,cnt] = clf_acc;
+		df_mcc.loc[num_feats,cnt] = clf_mcc;
+			
+		print '==> (AUC,ACC,MCC) = (',
+		print ('%0.4f,' % clf_auc),
+		print ('%0.4f,' % clf_acc),
+		print ('%0.4f,' % clf_mcc),
+		print ')'
+
+		# record model coefficients
+		clf_coef = clf_fit.coef_[0];
+		clf_vars = x_train.keys();
+		for varb,coef in zip(clf_vars,clf_coef):
+			df_coef.loc[varb,'clinical']=coef;
+		#endfor
+	#endif	
+		
+			
 	pnl_coef[cnt] = df_coef;
 
     return df_auc,df_acc,df_mcc,df_features,pnl_coef

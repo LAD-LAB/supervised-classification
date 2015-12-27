@@ -60,5 +60,5 @@ TSF='SQRT';
 
 ## CHOOSE CLASSIFIER
 
-CVCLFS   = SVC(kernel='linear',probability=True,shrinking=True,cache_size=2000,C=100,random_state=24289074);
-#CVCLFS   = LogisticRegression('l1',C=100)
+CVCLFS   = SVC(kernel='linear',probability=True,shrinking=True,cache_size=2000,C=100,random_state=random.randint(1,10**9));#24289074);
+#CVCLFS   = LogisticRegression('l1',C=100,random_state=random.randint(1,10**9));
