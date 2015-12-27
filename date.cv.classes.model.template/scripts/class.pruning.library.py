@@ -73,14 +73,12 @@ def GrabRelativeNode(n,relative):
 def WhoAreChildren(df):
     return list(set(df.unique()).difference([np.nan]))
 
-def TaxonomyDataFrame(x,otu_map):
+def TaxonomyDataFrame(x):
         
     # Let's create a dataframe with all of the OTU in the data set and detaied taxonomic information
     
     taxonomy_se = [];
     for microbe in x.keys():
-        if (isinstance(microbe,int)) | (str(microbe).isdigit()):
-            microbe  = otu_map.loc[int(microbe),'taxonomy']+';otu__'+str(microbe);
         taxonomy = microbe
         taxonomy = pd.Series(dict([clade.split('__') for clade in taxonomy.split(';')]),name = microbe)
         taxonomy_se.append(taxonomy)
@@ -90,13 +88,13 @@ def TaxonomyDataFrame(x,otu_map):
     
     return taxonomy_df
     
-def dropNonInformativeClades(x,otu_map):
+def dropNonInformativeClades(x):
     
     nodes  = ['k','p','c','o','f','g','s'];
     toDrop = [];    
     
     # Let's create a dataframe with all of the OTU in the data set and detaied taxonomic information
-    taxonomy_df = TaxonomyDataFrame(x,otu_map)
+    taxonomy_df = TaxonomyDataFrame(x)
 
     # Let's try to parse through each otu and see if it has any relatives at above clades. If so, we will manually create a variable name for that shared clade. 
     for n in nodes[1:]:
@@ -112,14 +110,10 @@ def dropNonInformativeClades(x,otu_map):
 		parent_df = df.loc[household,child];
 		if len(WhoAreChildren(parent_df))==1:
 			toDropName = ';'.join([xx+'__'+yy for xx,yy in zip(full,parent)]);
-			#toDropName = toDropName.replace('__na;','__;');
-			#if   toDropName[-4:]=='__na':
-			#     toDropName = toDropName[:-2];
-			#endif
 			toDrop.append(toDropName);
 		#endif
 	#endif
     #endfor
     x.drop(labels=toDrop,axis=1,inplace=True)    
-#enddef   
+    
     return x

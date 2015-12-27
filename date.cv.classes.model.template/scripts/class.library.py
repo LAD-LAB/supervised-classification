@@ -162,7 +162,6 @@ def SVM_RFE_soft_two_stage(**kwargs):
     include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
     shuffle,scale,transform               = [int(kwargs.get(varb)) for varb in ['shuffle','scale','transform']];
     scaler,transformer                    = [kwargs.get(varb) for varb in ['scaler','transformer']];
-    otu_taxa_map                          = [kwargs.get(varb) for varb in ['otu_taxa_map']][0];    
 
     print 'num_features\t',coarse_1
     print 'coarse steps\t',coarse_step_1
@@ -170,7 +169,6 @@ def SVM_RFE_soft_two_stage(**kwargs):
     print '(include_otus,include_static)\t(',include_otus,',',include_static,')'
     print '(scale with scaler)\t',scale,scaler
     print '(transform with transformer)\t',transform,transformer
-    print 'otu_taxa_map.shape\t',otu_taxa_map.shape
     print 'shuffle\t',shuffle
 	
     # initialize
@@ -209,7 +207,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 
 	print 'pruning'
 	print '(train,test)\t',x_train.shape,x_test.shape,'-->',
-	x_train = dropNonInformativeClades(x_train,otu_taxa_map)	
+	x_train = dropNonInformativeClades(x_train)	
 	x_test  = x_test.loc[:,x_train.keys()];	
 	print x_train.shape,x_test.shape
 
@@ -257,7 +255,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			features_kept           = x_train.keys()[SFE.support_];
 			feature_removed         = x_train.keys()[~SFE.support_].values[0];
 			df_features.loc[num_feats,cnt] = feature_removed;
-			print 'removed --> ',feature_removed
+			print 'removed --> ',feature_removed,'\t',
 
 			# transform feature matrices
 			x_train  = x_train.loc[:,features_kept];

@@ -48,7 +48,7 @@ include_static   = 0;
 #CVS = 'LOO';
 #CVS = 'holdout_validation';
 #CVS = 'SKF.10';
-CVS = 'SSS.150.10';
+CVS = 'SSS.25.10';
 
 # CHOOSE SCALER (only applies if normalize==1)
 SCL = 'Normal';

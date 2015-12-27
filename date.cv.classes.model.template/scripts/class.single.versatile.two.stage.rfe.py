@@ -40,14 +40,13 @@
 # txt_x_holdout_df      = sys.argv[5]; path to hold out subset of dynamic featuers matrix
 # txt_x_all             = sys.argv[6]; path to whole data set of dynamic features matrix
 # txt_clinical_df       = sys.argv[7]; path to whole data set of static features (here clinical features) **
-# txt_otu_taxa_map      = sys.argv[8]; path to OTU-->Taxonomy map
-# filepath              = sys.argv[9]; filepath 
-# simname               = sys.argv[10]; name of model 
-# params                = sys.argv[11]; parameter file 
-# pickle_model          = int(sys.argv[12]); 1="pickle select model output", 0="don't pickle anything"
-# shuffle               = int(sys.argv[13]); 1="shuffle labels of training data", 0="don't shuffle anything"
-# numperm		= int(sys.argv[14]); model iteration number
-# myRandSeed            = int(sys.argv[15]); integer for seeding numpy random generator
+# filepath              = sys.argv[8]; filepath 
+# simname               = sys.argv[9]; name of model 
+# params                = sys.argv[10]; parameter file 
+# pickle_model          = int(sys.argv[11]); 1="pickle select model output", 0="don't pickle anything"
+# shuffle               = int(sys.argv[12]); 1="shuffle labels of training data", 0="don't shuffle anything"
+# numperm		= int(sys.argv[13]); model iteration number
+# myRandSeed            = int(sys.argv[14]); integer for seeding numpy random generator
 
 # KEY
 # ** these text file must include header of feature names and index_col of subject/sample IDs
@@ -111,14 +110,13 @@ txt_x_holdin_df       = sys.argv[4];       print 'txt_x_holdin_df\t',       txt_
 txt_x_holdout_df      = sys.argv[5];       print 'txt_x_holdout_df\t',      txt_x_holdout_df
 txt_x_all             = sys.argv[6];       print 'txt_x_all\t',             txt_x_all
 txt_clinical_df       = sys.argv[7];       print 'txt_clinical_df\t',       txt_clinical_df
-txt_otu_taxa_map      = sys.argv[8];       print 'txt_otu_taxa_map\t',      txt_otu_taxa_map
-filepath              = sys.argv[9];       print 'filepath\t',              filepath
-simname               = sys.argv[10];      print 'simname\t',               simname
-params                = sys.argv[11];      print 'parameter_file\t',        params 
-pickle_model          = int(sys.argv[12]); print 'pickle_model\t',          pickle_model
-shuffle               = int(sys.argv[13]); print 'shuffle\t',               shuffle
-numperm               = int(sys.argv[14]); print 'numperm\t',		    numperm
-myRandSeed            = int(sys.argv[15]); print 'myRandsed\t',             myRandSeed
+filepath              = sys.argv[8];       print 'filepath\t',              filepath
+simname               = sys.argv[9];      print 'simname\t',               simname
+params                = sys.argv[10];      print 'parameter_file\t',        params 
+pickle_model          = int(sys.argv[11]); print 'pickle_model\t',          pickle_model
+shuffle               = int(sys.argv[12]); print 'shuffle\t',               shuffle
+numperm               = int(sys.argv[13]); print 'numperm\t',		    numperm
+myRandSeed            = int(sys.argv[14]); print 'myRandsed\t',             myRandSeed
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
@@ -141,7 +139,6 @@ y_holdin_df       = pd.read_csv(txt_y_holdin_df,       sep='\t',header=0,index_c
 y_holdout_df      = pd.read_csv(txt_y_holdout_df,      sep='\t',header=0,index_col=0);
 y_all             = pd.read_csv(txt_y_all,             sep='\t',header=0,index_col=0);
 clinical_df       = pd.read_csv(txt_clinical_df,       sep='\t',header=0,index_col=0);
-otu_taxa_map      = pd.read_csv(txt_otu_taxa_map,      sep='\t',header=0,index_col=0);
 
 #######################################################################
 ##Cross-validated model training to approximate generalized performance and feature importances
@@ -197,7 +194,6 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
   				 transformer = transformer,\
 				       scale = scale,\
     	 			      scaler = scaler,\
-			        otu_taxa_map = otu_taxa_map,\
 				include_otus = include_otus,\
   			      include_static = include_static,\
 				     shuffle = shuffle);
@@ -231,7 +227,7 @@ if shuffle==0:
 
 	print 'pruning'
 	print x_use.shape,'-->',
-	x_use = dropNonInformativeClades(x_use,otu_taxa_map);
+	x_use = dropNonInformativeClades(x_use);
 	print x_use.shape
 
 	#######################################################################################
