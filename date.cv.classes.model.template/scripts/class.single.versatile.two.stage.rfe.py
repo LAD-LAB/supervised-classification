@@ -111,7 +111,7 @@ txt_x_holdout_df      = sys.argv[5];       print 'txt_x_holdout_df\t',      txt_
 txt_x_all             = sys.argv[6];       print 'txt_x_all\t',             txt_x_all
 txt_clinical_df       = sys.argv[7];       print 'txt_clinical_df\t',       txt_clinical_df
 filepath              = sys.argv[8];       print 'filepath\t',              filepath
-simname               = sys.argv[9];      print 'simname\t',               simname
+simname               = sys.argv[9];       print 'simname\t',               simname
 params                = sys.argv[10];      print 'parameter_file\t',        params 
 pickle_model          = int(sys.argv[11]); print 'pickle_model\t',          pickle_model
 shuffle               = int(sys.argv[12]); print 'shuffle\t',               shuffle
@@ -199,7 +199,7 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 				     shuffle = shuffle);
 
 
-cv_df_auc,cv_df_acc,cv_df_mcc,cv_df_features = [arg for arg in args_out]; 
+cv_df_auc,cv_df_acc,cv_df_mcc,cv_df_features,df_coef = [arg for arg in args_out]; 
 
 if shuffle==0: 
 	
@@ -279,13 +279,27 @@ if shuffle==0:
 	#endif
 
 # SAVE AUROC,ACCURACY,and MCC 
-cv_df_auc.to_csv(filepath+'/cv_auc.txt',sep='\t',header=True,index_col=True);
-cv_df_acc.to_csv(filepath+'/cv_acc.txt',sep='\t',header=True,index_col=True);
-cv_df_mcc.to_csv(filepath+'/cv_mcc.txt',sep='\t',header=True,index_col=True);
+cv_df_auc.to_csv(filepath+'/slurm.log/cv_auc.'+str(numperm)+'.txt',sep='\t',header=True,index_col=True);
+cv_df_acc.to_csv(filepath+'/slurm.log/cv_acc.'+str(numperm)+'.txt',sep='\t',header=True,index_col=True);
+cv_df_mcc.to_csv(filepath+'/slurm.log/cv_mcc.'+str(numperm)+'.txt',sep='\t',header=True,index_col=True);
 
 # SAVE FEATURE LISTS/RANKING
-cv_df_features.to_csv(filepath+'/cv_features.txt',sep='\t',header=True,index_col=True);
-df_features.to_csv(filepath+'/features.txt',sep='\t',header=True,index_col=True);
+cv_df_features.to_csv(filepath+'/slurm.log/cv.features.'+str(numperm)+'.txt',sep='\t',header=True,index_col=True);
+df_features.to_csv(filepath+'/slurm.log/features.'+str(numperm)+'.txt',sep='\t',header=True,index_col=True);
+
+# SAVE FEATURE COEFFICIENTS via pickling
+
+if shuffle==0:
+	topickle = ['cv_df_auc', 'cv_df_acc', 'cv_df_mcc', \
+                    'cv_df_features', 'df_features', 'df_coef'];
+
+	PIK = filepath+'/slurm.log/itr.'+str(numperm)+'.pickle';
+	with open(PIK,"wb") as f:
+		pickle.dump(topickle,f);
+		for value in topickle:
+			pickle.dump([cv_df_auc, cv_df_acc, cv_df_mcc, \
+				     cv_df_features, df_features, df_coef],
+				  f)
 
 ##########################################################
 # end of script		   

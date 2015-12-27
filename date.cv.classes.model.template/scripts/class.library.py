@@ -176,7 +176,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
     df_auc,df_acc,df_mcc,df_features = [pd.DataFrame(columns=range(1,len(cv)+1)) for aa in range(4)];
 	
     # initialize recursive feature elimination objects
-    rfe1    = RFE(estimator=clf,n_features_to_select=coarse_1,step=coarse_step_1)  
+    rfe1     = RFE(estimator=clf,n_features_to_select=coarse_1,step=coarse_step_1)  
+    pnl_coef = {};    
 
     cnt = 0;
     for train, test in cv:
@@ -243,6 +244,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	        coarse_features = x_train.keys()[rfe1.fit(x_train,y_train).support_] 
        		x_train         = x_train.loc[:,coarse_features];
 		
+		df_coef = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
+
 		# finely prune features one by one
 		for num_feats in range(x_train.shape[1])[::-1][:-1]:
 		        print 'feature #'+str(num_feats)+'\t', 
@@ -287,9 +290,17 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			print ('%0.4f,' % clf_mcc),
 			print ')'
 
+			# record model coefficients
+			clf_coef = clf_fit.coef_[0];
+			clf_vars = x_train.keys();
+			for varb,coef in zip(clf_vars,clf_coef):
+				df_coef.loc[varb,num_feats]=coef;
+	
 	# use only static unselected features
 	elif  (include_otus==0) and (include_static==1):
 		x_train   = static_features.loc[x_train.index,:];
 		x_test    = static_features.loc[x_test.index,:];
 
-    return df_auc,df_acc,df_mcc,df_features
+	pnl_coef[cnt] = df_coef;
+
+    return df_auc,df_acc,df_mcc,df_features,pnl_coef
