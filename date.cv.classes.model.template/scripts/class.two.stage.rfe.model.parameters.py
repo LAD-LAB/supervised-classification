@@ -2,7 +2,7 @@
 
 # ___author___ = Firas Said Midani
 # ___e-mail___ = firas.midani@duke.edu
-# ___date_____ = 2015.12.07
+# ___date_____ = 2050;12.07
 # ___version__ = 1.0
 
 #####################################
@@ -37,10 +37,7 @@ outcomes_dict    = {1:1,2:1,3:0,4:0}
 frequency_cutoff = 0.10;
 
 num_features_1   = 350;
-coarse_steps_1   = 100;
-coarse_steps_2   = 1;
-fine_steps       = 1;
-internal_cv      = 10;
+coarse_steps_1   = 25;
 transform        = 0;
 scale            = 0;
 include_otus     = 1;
@@ -51,7 +48,7 @@ include_static   = 0;
 #CVS = 'LOO';
 #CVS = 'holdout_validation';
 #CVS = 'SKF.10';
-CVS = 'SSS.50.10';
+CVS = 'SSS.150.10';
 
 # CHOOSE SCALER (only applies if normalize==1)
 SCL = 'Normal';
@@ -65,4 +62,3 @@ TSF = 'SQRT';
 
 #CVCLFS   = SVC(kernel='linear',probability=True,shrinking=False,cache_size=2000,C=100,random_state=24289074);
 CVCLFS   = LogisticRegression('l2',C=100)
-CLFS     = CVCLFS;

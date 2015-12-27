@@ -155,36 +155,34 @@ def subset_data(list_of_criteria,mapping_df,features_df):
 
 def SVM_RFE_soft_two_stage(**kwargs):
     
-    cv,arg_int_cv,clf                     = [kwargs.get(varb) for varb in ['arg_ext_cv','arg_int_cv','clf']];
+    cv,clf                                = [kwargs.get(varb) for varb in ['arg_ext_cv','clf']];
     x,y,static_features                   = [kwargs.get(varb) for varb in ['x','y','static_features']];
-    coarse_1,coarse_2                     = [int(kwargs.get(varb)) for varb in ['coarse_1','coarse_2']];
-    coarse_step_1,coarse_step_2,fine_step = [int(kwargs.get(varb)) for varb in ['coarse_step_1','coarse_step_2','fine_step']];
+    coarse_1,coarse_step_1                = [int(kwargs.get(varb)) for varb in ['coarse_1','coarse_step_1']];
     frequency_cutoff                      = [float(kwargs.get(varb)) for varb in ['frequency_cutoff']][0]; 
     include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
     shuffle,scale,transform               = [int(kwargs.get(varb)) for varb in ['shuffle','scale','transform']];
     scaler,transformer                    = [kwargs.get(varb) for varb in ['scaler','transformer']];
     otu_taxa_map                          = [kwargs.get(varb) for varb in ['otu_taxa_map']][0];    
 
-    print 'num_features\t',coarse_1,' then ',coarse_2
-    print 'coarse steps\t',coarse_step_1,' then ',coarse_step_2
-    print 'fine steps\t',fine_step
+    print 'num_features\t',coarse_1
+    print 'coarse steps\t',coarse_step_1
     print 'frequency_cutoff\t',frequency_cutoff 
     print '(include_otus,include_static)\t(',include_otus,',',include_static,')'
-    print 'shuffle\t',shuffle
     print '(scale with scaler)\t',scale,scaler
     print '(transform with transformer)\t',transform,transformer
     print 'otu_taxa_map.shape\t',otu_taxa_map.shape
+    print 'shuffle\t',shuffle
 	
     # initialize
-    _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)]
-
+    _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)];
+    df_auc,df_acc,df_mcc,df_features = [pd.DataFrame(columns=range(1,len(cv)+1)) for aa in range(4)];
+	
     # initialize recursive feature elimination objects
     rfe1    = RFE(estimator=clf,n_features_to_select=coarse_1,step=coarse_step_1)  
-    rfe2    = RFE(estimator=clf,n_features_to_select=coarse_2,step=coarse_step_2)  
 
     cnt = 0;
     for train, test in cv:
-        cnt+=1; print cnt,
+        cnt+=1; print "%04.f" %cnt,
 	
 	# split data ino training and testing folds
         x_train,x_test,y_train,y_test = split_only(x,y,train,test);
@@ -230,83 +228,70 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	
 	if scale==1:
                 print 'scaling with ',scaler
-		#print 'means of (mean,std) and (min,max) of features'
-		#print 'training matrix\t',
-		#print "(%0.3f,%0.3f)" % (np.mean(x_train.apply(np.mean,0)),np.mean(x_train.apply(np.std,0))),
-		#print "(%0.3f,%0.3f)" % (np.mean(x_train.apply(np.min,0)),np.mean(x_train.apply(np.max)))
-		#print 'testing matrix\t',
-		#print "(%0.3f,%0.3f)" % (np.mean(x_test.apply(np.mean,0)),np.std(x_test.apply(np.std,0))),	
-		#print "(%0.3f,%0.3f)" % (np.mean(x_test.apply(np.min,0)),np.std(x_test.apply(np.max,0)))	
 		x_train_scale = scaler.fit(x_train);
 		x_train       = pd.DataFrame(x_train_scale.transform(x_train), \
 					     index=x_train.index, columns=x_train.keys());
 		x_test        = pd.DataFrame(x_train_scale.transform(x_test),  \
-					     index=x_test.index,  columns=x_test.keys());
-		#print '-->'
-		#print 'training matrix\t',
-		#print "(%0.3f,%0.3f)" % (np.mean(x_train.apply(np.mean,0)),np.mean(x_train.apply(np.std,0))),	
-		#print "(%0.3f,%0.3f)" % (np.mean(x_train.apply(np.min,0)),np.mean(x_train.apply(np.max,0)))	
-		#print 'testing matrix\t',
-		#print "(%0.3f,%0.3f)" % (np.mean(x_test.apply(np.mean,0)),np.mean(x_test.apply(np.std,0))),	
-		#print "(%0.3f,%0.3f)" % (np.mean(x_test.apply(np.min,0)),np.mean(x_test.apply(np.max,0)))	
-		      	
+					     index=x_test.index, columns=x_test.keys());
+	      	
 	#################################################################################
 	#Apply Recrusive Feature Elimination wrapped aroud a user-defined classifier
 	#################################################################################
 	
 	# use only features that are transformed with RFE
 	if include_otus==1: 
-	 	# Narrow down  full list of features to 100                                     
-	        coarse_selector_1 = rfe1.fit(x_train,y_train)  
-        	coarse_selector_2 = rfe2.fit(x_train.iloc[:,coarse_selector_1.support_],y_train)  
-                
- 		# Identify the top features that maximizes AUROC
-        	top_features  = np.where(coarse_selector_1.support_)[0][np.where(coarse_selector_2.support_)[0]]
-       
-		x_train_top   = x_train.iloc[:,top_features]#.join(static_features);
-		x_test_top    = x_test.iloc[:,top_features]#.join(static_features);
- 
-	# combine both features that are transformed with RFE and static unselected featuers
-	if    (include_otus==1) and (include_static==1):
-		x_train_top   = x_train_top.join(static_features);
-		x_test_top    = x_test_top.join(static_features);
 	
+	 	# Narrow down  full list of features to 100                                     
+	        coarse_features = x_train.keys()[rfe1.fit(x_train,y_train).support_] 
+       		x_train         = x_train.loc[:,coarse_features];
+		
+		# finely prune features one by one
+		for num_feats in range(x_train.shape[1])[::-1][:-1]:
+		        print 'feature #'+str(num_feats)+'\t', 
+	
+			#single feature elimination
+			SFE = RFE(clf,n_features_to_select=num_feats,step=1);
+			SFE = SFE.fit(x_train,y_train);
+
+			# track which feature is removed
+			features_kept           = x_train.keys()[SFE.support_];
+			feature_removed         = x_train.keys()[~SFE.support_].values[0];
+			df_features.loc[num_feats,cnt] = feature_removed;
+			print 'removed --> ',feature_removed
+
+			# transform feature matrices
+			x_train  = x_train.loc[:,features_kept];
+			x_test   = x_test.loc[:,features_kept];      		
+
+			# join non-filtered (static) featuers
+			if include_static==1:
+				x_train = x_train.join(static_features);
+				x_test  = x_test.join(static_features);
+			
+			# fit and test classifier with remaining featuers (store AUC)
+			clf_fit  = clf.fit(x_train,y_train);
+			clf_eval = clf_fit.decision_function(x_test);
+			clf_pdct = clf.predict(x_test);
+
+			# compute AUC, accuracy, and MCC
+			clf_auc  = roc_auc_score(y_test,clf_eval);
+			clf_acc  = accuracy_score(y_test,clf_pdct);
+			clf_mcc  = matthews_corrcoef(y_test,clf_pdct);
+
+			# record model performance
+			df_auc.loc[num_feats,cnt] = clf_auc;
+			df_acc.loc[num_feats,cnt] = clf_acc;
+			df_mcc.loc[num_feats,cnt] = clf_mcc;
+			
+			print '==> (AUC,ACC,MCC) = (',
+			print ('%0.4f,' % clf_auc),
+			print ('%0.4f,' % clf_acc),
+			print ('%0.4f,' % clf_mcc),
+			print ')'
+
 	# use only static unselected features
 	elif  (include_otus==0) and (include_static==1):
-		x_train_top   = static_features.loc[x_train.index,:];
-		x_test_top    = static_features.loc[x_test.index,:];
+		x_train   = static_features.loc[x_train.index,:];
+		x_test    = static_features.loc[x_test.index,:];
 
-	#################################################################################
-	#Apply user-defined supervised learning classifier
-	#################################################################################
-
-        # Train model using only those features 
-        opt_clf         = clf.fit(x_train_top,y_train);
-
-        # Evaluate model performance with testing data
-        probas   = opt_clf.predict_proba(x_test_top)[:,1]; 
-	scores   = opt_clf.decision_function(x_test_top);
-	predicts = opt_clf.predict(x_test_top);
-	trues    = np.ravel(y_test.values);
-	
-	_probas   += list(probas);
- 	_predicts += list(predicts);
-	_scores   += list(scores);
-	_trues    += list(trues);
-	_tests_ix += list(test);
-    
-        if len(test)>2:
-		auroc_p, auroc_s   = (roc_auc_score(trues,probas),    roc_auc_score(trues,scores));
-        	accuracy, matthews = (accuracy_score(trues,predicts), matthews_corrcoef(trues,predicts)); 
-        	
-		_auroc_p.append(auroc_p)
-		_auroc_s.append(auroc_s)
-		_acc.append(accuracy)
-		_mcc.append(matthews)
-
-		print "roc_p=%0.4f" % auroc_p
-		print "roc_s=%0.4f" % auroc_s
-		print "acc=%0.4f"   % accuracy
-		print "mcc=%0.4f"   % matthews
-		
-    return _tests_ix,_trues,_predicts,_probas,_scores,_auroc_p,_auroc_s,_acc,_mcc
+    return df_auc,df_acc,df_mcc,df_features

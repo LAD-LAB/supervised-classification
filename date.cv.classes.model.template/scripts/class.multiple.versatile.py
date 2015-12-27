@@ -44,8 +44,7 @@
 # simname            = sys.argv[8; simulation name (used for naming files)
 # shuffle            = sys.argv[9]; 1="shuffle labels", 0="don't shuffle labels"
 # numperm            = int(sys.argv[10]); "number of permutations/iterations
-# num_features_2     = int(sys.argv[11]); target number of features in predictive model
-# pickle_model       = int(sys.argv[12]); 1="pickle select model output", 0="don't pickle anything"
+# pickle_model       = int(sys.argv[11]); 1="pickle select model output", 0="don't pickle anything"
 
 ##########################################################
 # CREATES/MODIFIES/REMOVES
@@ -113,8 +112,7 @@ filepath           = sys.argv[7]; print 'filepath\t',filepath
 simname            = sys.argv[8]; print 'simname\t',simname
 shuffle            = int(sys.argv[9]); print 'shuffle\t',shuffle
 numperm            = int(sys.argv[10]); print 'numperm\t',numperm
-num_features_2     = int(sys.argv[11]); print 'num_features\t', num_features_2
-pickle_model       = int(sys.argv[12]); print 'pickle_model\t', pickle_model
+pickle_model       = int(sys.argv[11]); print 'pickle_model\t', pickle_model
 
 foo = imp.load_source('model_parameters',params)
 from model_parameters import *
@@ -193,15 +191,6 @@ dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff
 x_holdin_df    = x_holdin_df.loc[:,dense_features]
 x_holdout_df   = x_holdout_df.loc[:,dense_features]
 
-##############################################################
-# initialization for tracking of jobs' completion and results 				   
-##############################################################
-
-# INITIALIZE LOG OF SUCCESSFUL JOB MAIN OUTPUT AUROC
-for filetype in ['/auroc.txt','/acc.txt','/mcc.txt']:
-	fid = open(filepath+filetype,'w+');
-	fid.close()
-
 ##########################################################
 # distribute jobs input		   
 ##########################################################
@@ -245,7 +234,6 @@ fid.write('otu_taxa_map='      +txt_otu_taxa_map       +' \n');
 fid.write('filepath='          +filepath               +' \n');
 fid.write('simname='           +simname                +' \n');
 fid.write('params='            +params                 +' \n');
-fid.write('num_features='      +str(num_features_2)    +' \n');
 fid.write('pickle_model='      +str(pickle_model)      +' \n');
 fid.write('shuffle='           +str(shuffle)           +' \n');
 fid.write('numperm='           +'$SLURM_ARRAY_TASK_ID' +' \n');
@@ -254,7 +242,7 @@ main_cmd = 'srun -o $out_path -e $err_path python '
 main_cmd+=  pypath+'/class.single.versatile.two.stage.rfe.py ';
 main_cmd+= '$y_holdin_df $y_holdout_df $y_all_df ';
 main_cmd+= '$x_holdin_df $x_holdout_df $x_all_df $x_static_df $otu_taxa_map ';
-main_cmd+= '$filepath $simname $params $num_features $pickle_model $shuffle $numperm $myRandSeed\n\n';
+main_cmd+= '$filepath $simname $params $pickle_model $shuffle $numperm $myRandSeed\n\n';
 fid.write(main_cmd);
 fid.write('echo $SLURM_ARRAY_JOB_ID > '+filepath+'/'+simname+'.job');
 fid.close()
