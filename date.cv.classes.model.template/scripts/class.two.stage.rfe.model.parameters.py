@@ -36,8 +36,8 @@ outcomes_dict    = {1:1,2:1,3:0,4:0}
 
 frequency_cutoff = 0.10;
 
-num_features_1   = 350;
-coarse_steps_1   = 25;
+num_features_1   = 501;
+coarse_steps_1   = 10;
 transform        = 0;
 scale            = 0;
 include_otus     = 1;
@@ -48,7 +48,7 @@ include_static   = 0;
 #CVS = 'LOO';
 #CVS = 'holdout_validation';
 #CVS = 'SKF.10';
-CVS = 'SSS.25.10';
+CVS = 'SSS.300.10';
 
 # CHOOSE SCALER (only applies if normalize==1)
 SCL = 'Normal';
@@ -60,5 +60,5 @@ TSF = 'SQRT';
 
 ## CHOOSE CLASSIFIER
 
-#CVCLFS   = SVC(kernel='linear',probability=True,shrinking=False,cache_size=2000,C=100,random_state=24289074);
-CVCLFS   = LogisticRegression('l2',C=100)
+CVCLFS   = SVC(kernel='linear',probability=True,shrinking=True,cache_size=2000,C=100,random_state=24289074);
+#CVCLFS   = LogisticRegression('l1',C=100)
