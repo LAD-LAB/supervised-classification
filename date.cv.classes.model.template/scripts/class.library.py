@@ -273,7 +273,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			# fit and test classifier with remaining featuers (store AUC)
 			clf_fit  = clf.fit(x_train,y_train);
 			clf_eval = clf_fit.decision_function(x_test);
-			clf_pdct = clf.predict(x_test);
+			clf_pdct = clf_fit.predict(x_test);
 
 			# compute AUC, accuracy, and MCC
 			clf_auc  = roc_auc_score(y_test,clf_eval);
@@ -310,7 +310,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		# fit and test classifier with remaining featuers (store AUC)
 		clf_fit  = clf.fit(x_train,y_train);
 		clf_eval = clf_fit.decision_function(x_test);
-		clf_pdct = clf.predict(x_test);
+		clf_pdct = clf_fit.predict(x_test);
 
 		# compute AUC, accuracy, and MCC
 		clf_auc  = roc_auc_score(y_test,clf_eval);

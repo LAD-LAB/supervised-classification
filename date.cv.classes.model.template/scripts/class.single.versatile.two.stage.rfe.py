@@ -285,9 +285,9 @@ if shuffle==0:
 			#endif
 			
 			#fit and test classifier with remaining features 
-			clf_fit  = clf_fit(x_use,y_all);
+			clf_fit  = CVCLFS.fit(x_use,y_all);
 			clf_eval = clf_fit.decision_function(x_use);
-			clf_pdct = clf.predict(x_use);
+			clf_pdct = clf_fit.predict(x_use);
 
 			#compute AUC, accuracy, and MCC
 			clf_auc = roc_auc_score(y_all,clf_eval);
@@ -314,9 +314,9 @@ if shuffle==0:
 		df_coef = pd.DataFrame(index=x_use.keys(),columns=['static']);
 		
 		#fit and test classifier 
-		clf_fit  = clf.fit(x_use,y_all);
+		clf_fit  = CVCLFS.fit(x_use,y_all);
 		clf_eval = clf_fit.decision_function(x_use);
-		clf_pdct = clf.predict(x_use);
+		clf_pdct = clf_fit.predict(x_use);
 
 		#compute AUC, accuracy, and MCC
 		clf_auc  = roc_auc_score(y_all,clf_eval);
