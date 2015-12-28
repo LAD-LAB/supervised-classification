@@ -42,6 +42,7 @@ transform=0;
 scale=0;
 include_otus=1;
 include_static=0;
+include_static_with_prob=0;
 
 # CHOOSE VALIDATION SCHEME
 
@@ -51,14 +52,12 @@ include_static=0;
 CVS = 'SSS.100.10';
 
 # CHOOSE SCALER (only applies if normalize==1)
-SCL='Normal';
+SCL=;
 #SCL='MinMax';
 
 # CHOOSE TRANSFORM
 #TSF='LOG';
-TSF='SQRT';
+TSF=;
 
 ## CHOOSE CLASSIFIER
-
-CVCLFS   = SVC(kernel='linear',probability=True,shrinking=True,cache_size=2000,C=100,random_state=random.randint(1,10**9));#24289074);
-#CVCLFS   = LogisticRegression('l1',C=100,random_state=random.randint(1,10**9));
+CLSS=;
