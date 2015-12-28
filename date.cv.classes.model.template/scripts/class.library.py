@@ -178,6 +178,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
     # initialize recursive feature elimination objects
     rfe1     = RFE(estimator=clf,n_features_to_select=coarse_1,step=coarse_step_1)  
     pnl_coef = {};    
+    pnl_prob = {};
 
     cnt = 0;
     for train, test in cv:
@@ -245,6 +246,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
        		x_train         = x_train.loc[:,coarse_features];
 		
 		df_coef = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
+		df_prob = pd.DataFrame(index=x_train.index,  columns=range(1,x_train.shape[1]));
 
 		# finely prune features one by one
 		for num_feats in range(x_train.shape[1])[::-1][:-1]:
@@ -296,6 +298,11 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			clf_vars = x_train.keys();
 			for varb,coef in zip(clf_vars,clf_coef):
 				df_coef.loc[varb,num_feats]=coef;
+	
+			# record model estimates of P(y=1) for subjects
+			for smp,prob in zip(y_test.index,clf_eval):
+				df_prob.loc[smp,num_feats]=prob;
+			
 			#endfor
 		#endfor
 	
@@ -306,6 +313,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		x_test    = static_features.loc[x_test.index,:];
 	
 		df_coef   = pd.DataFrame(index=x_train.keys(), columns=['clinical']);
+		df_prob   = pd.DataFrame(index=x_train.index,  columns=['clinical']);
 
 		# fit and test classifier with remaining featuers (store AUC)
 		clf_fit  = clf.fit(x_train,y_train);
@@ -333,10 +341,16 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		clf_vars = x_train.keys();
 		for varb,coef in zip(clf_vars,clf_coef):
 			df_coef.loc[varb,'clinical']=coef;
+		
+		# record model estimates of P(y=!) for subjects
+		for smp,prob in zip(y_test.index,clf_eval):
+			df_prob.loc[smp,'clinical']=prob;
+	
 		#endfor
 	#endif	
 		
 			
 	pnl_coef[cnt] = df_coef;
+	pnl_prob[cnt] = df_prob;
 
-    return df_auc,df_acc,df_mcc,df_features,pnl_coef
+    return df_auc,df_acc,df_mcc,df_features,pnl_coef,pnl_prob

@@ -199,7 +199,7 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 				     shuffle = shuffle);
 
 
-cv_df_auc,cv_df_acc,cv_df_mcc,cv_df_features,cv_pnl_coef = [arg for arg in args_out]; 
+cv_df_auc,cv_df_acc,cv_df_mcc,cv_df_features,cv_pnl_coef,cv_pnl_prob = [arg for arg in args_out]; 
 
 if shuffle==0: 
 	
@@ -209,8 +209,10 @@ if shuffle==0:
 
 	#initialize 
 	df_features = pd.DataFrame(columns=["whole"]);
+
 	pnl_coef    = {};
-	
+	pnl_prob    = {};
+
 	################################################################################
 	#Filter data based on frequency of presence of each feature across model samples
 	#################################################################################
@@ -261,7 +263,8 @@ if shuffle==0:
 		x_use            = x_use.loc[:,coarse_features];
 
 		df_coef = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));		
-
+		df_prob = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
+	
 		# finely prune features one by one
 		for num_feats in range(x_use.shape[1])[::-1][:-1]:
 			print 'feature #'+str(num_feats)+'\t',			
@@ -302,17 +305,22 @@ if shuffle==0:
 
 			#record model coefficients
 			clf_coef = clf_fit.coef_[0];
-			clf_Vars = x_use.keys();
+			clf_vars = x_use.keys();
 			for varb,coef in zip(clf_vars,clf_coef):
 				df_coef.loc[varb,num_feats]=coef;
+
+			#record model estimates of P(y=1) for subjects
+			for smp,prob in zip(y_all.index,clf_eval):
+				df_prob.loc[smp,num_feats]=prob;	
 			#endfor
 		#endfor
 
 	elif (include_otus==0) and (include_static==1):
 
 		x_use   = static_features.loc[x_use.index,:];
-		df_coef = pd.DataFrame(index=x_use.keys(),columns=['static']);
-		
+		df_coef = pd.DataFrame(index=x_use.keys(),columns=['clinical']);
+		df_prob = pd.DataFrame(index=x_use.index, columns=['clinical']);
+	
 		#fit and test classifier 
 		clf_fit  = CVCLFS.fit(x_use,y_all);
 		clf_eval = clf_fit.decision_function(x_use);
@@ -328,16 +336,21 @@ if shuffle==0:
 		print ('%0.4f,' % clf_acc),
 		print ('%0.4f,' % clf_mcc),
 		print ')'
-
+	
+		# record model coefficients
 		clf_coef = clf_fit.coef_[0];
 		clf_vars = x_use.keys();
 		for varb, coef in zip(clf_vars,clf_coef):
-			df_coef.loc[varb,'static']=coef;
+			df_coef.loc[varb,'clinical']=coef;
+	
+		# record model esitmates of P(y==1) for subjects
+		for smp,prob in zip(y_all.index,clf_eval):
+			df_prob.loc[smp,'clinical']=prob;
 		#endfor
 	#endif
 
-	pnl_coef[cnt] = df_coef;
-
+	pnl_coef = df_coef;	
+	pnl_prob = df_prob;	
 # SAVE AUROC,ACCURACY,and MCC 
 cv_df_auc.to_csv(filepath+'/slurm.log/cv_auc.'+str(numperm)+'.txt',sep='\t',header=True,index_col=True);
 cv_df_acc.to_csv(filepath+'/slurm.log/cv_acc.'+str(numperm)+'.txt',sep='\t',header=True,index_col=True);
@@ -351,14 +364,18 @@ df_features.to_csv(filepath+'/slurm.log/features.'+str(numperm)+'.txt',sep='\t',
 
 if shuffle==0:
 	topickle = ['cv_df_auc', 'cv_df_acc', 'cv_df_mcc', \
-                    'cv_df_features', 'df_features', 'cv_pnl_coef', 'pnl_coef'];
+                    'cv_df_features', 'df_features', \
+                    'cv_pnl_coef', 'pnl_coef', \
+       	            'cv_pnl_prob', 'pnl_prob'];
 
 	PIK = filepath+'/slurm.log/itr.'+str(numperm)+'.pickle';
 	with open(PIK,"wb") as f:
 		pickle.dump(topickle,f);
 		for value in topickle:
 			pickle.dump([cv_df_auc, cv_df_acc, cv_df_mcc, \
-				     cv_df_features, df_features, cv_pnl_coef, pnl_coef],
+				     cv_df_features, df_features, \
+	  		             cv_pnl_coef, pnl_coef, \
+	  			     cv_pnl_prob, pnl_prob],
 				  f)
 
 ##########################################################
