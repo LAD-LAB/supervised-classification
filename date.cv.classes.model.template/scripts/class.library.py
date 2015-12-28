@@ -160,9 +160,13 @@ def SVM_RFE_soft_two_stage(**kwargs):
     coarse_1,coarse_step_1                = [int(kwargs.get(varb)) for varb in ['coarse_1','coarse_step_1']];
     frequency_cutoff                      = [float(kwargs.get(varb)) for varb in ['frequency_cutoff']][0]; 
     include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
-    shuffle,scale,transform               = [int(kwargs.get(varb)) for varb in ['shuffle','scale','transform']];
+    shuffle,scale,transform,pickle_model  = [int(kwargs.get(varb)) for varb in ['shuffle','scale','transform','pickle_model']];
     scaler,transformer                    = [kwargs.get(varb) for varb in ['scaler','transformer']];
+    include_static_with_prob              = [kwargs.get(varb) for varb in ['include_static_with_prob']][0];	
+    filepath    			  = [kwargs.get(varb) for varb in ['filepath']][0];
+    numperm     			  = [str(kwargs.get(varb)) for varb in ['numperm']][0];
 
+ 
     print 'num_features\t',coarse_1
     print 'coarse steps\t',coarse_step_1
     print 'frequency_cutoff\t',frequency_cutoff 
@@ -173,14 +177,18 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	
     # initialize
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)];
-    df_auc,df_acc,df_mcc,df_features = [pd.DataFrame(columns=range(1,len(cv)+1)) for aa in range(4)];
+    
+    cnt = int(numperm)*len(cv);
+    df_auc,df_acc,df_mcc = [pd.DataFrame(columns=range(cnt,cnt+len(cv)+1)) for aa in range(3)];
+    #df_auc,df_acc,df_mcc = [pd.DataFrame(columns=range(1,len(cv)+1)) for aa in range(3)];
 	
     # initialize recursive feature elimination objects
     rfe1     = RFE(estimator=clf,n_features_to_select=coarse_1,step=coarse_step_1)  
-    pnl_coef = {};    
-    pnl_prob = {};
+    
+    pnl_features = pd.DataFrame(index=x.keys())#columns=range(1,len(cv)+1));
 
-    cnt = 0;
+    #cnt = (numperm)*len(cv);
+    #cnt = 0;
     for train, test in cv:
         cnt+=1; print "%04.f" %cnt,
 	
@@ -244,13 +252,14 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	 	# Narrow down  full list of features to 100                                     
 	        coarse_features = x_train.keys()[rfe1.fit(x_train,y_train).support_] 
        		x_train         = x_train.loc[:,coarse_features];
-		
-		df_coef = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
-		df_prob = pd.DataFrame(index=x_train.index,  columns=range(1,x_train.shape[1]));
+
+		df_features = pd.DataFrame(np.ones(x_train.shape[1]),index=x_train.keys(),columns=[cnt]);	
+		df_coef     = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
+		df_prob     = pd.DataFrame(index=x_test.index,  columns=range(1,x_train.shape[1]));
 
 		# finely prune features one by one
 		for num_feats in range(x_train.shape[1])[::-1][:-1]:
-		        print 'feature #'+str(num_feats)+'\t', 
+		        #print 'feature #'+str(num_feats)+'\t', 
 	
 			#single feature elimination
 			SFE = RFE(clf,n_features_to_select=num_feats,step=1);
@@ -259,9 +268,9 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			# track which feature is removed
 			features_kept           = x_train.keys()[SFE.support_];
 			feature_removed         = x_train.keys()[~SFE.support_].values[0];
-			df_features.loc[num_feats,cnt] = feature_removed;
-			print 'removed --> ',feature_removed,'\t',
-
+			df_features.loc[feature_removed,cnt] = num_feats;
+			
+			#print 'removed --> ',feature_removed,'\t',
 			# transform feature matrices
 			x_train  = x_train.loc[:,features_kept];
 			x_test   = x_test.loc[:,features_kept];      		
@@ -277,6 +286,19 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			clf_eval = clf_fit.decision_function(x_test);
 			clf_pdct = clf_fit.predict(x_test);
 
+			if include_static_with_prob==1:
+	
+				x_all    = x_train.append(x_test);
+				clf_eval = pd.DataFrame(clf_fit.decision_function(x_all),index=x_all.index,columns=['bacterial_risk']);
+				x_all    = x_all.join(static_features);
+				
+				x_train  = x_all.loc[y_train.index,:];
+				x_test   = x_all.loc[y_test.index,:];
+
+				clf_fit  = clf.fit(x_train,y_train);
+				clf_eval = clf_fit.decision_function(x_test);
+				clf_pdct = clf_fit.predict(x_test);
+				
 			# compute AUC, accuracy, and MCC
 			clf_auc  = roc_auc_score(y_test,clf_eval);
 			clf_acc  = accuracy_score(y_test,clf_pdct);
@@ -287,23 +309,13 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			df_acc.loc[num_feats,cnt] = clf_acc;
 			df_mcc.loc[num_feats,cnt] = clf_mcc;
 			
-			print '==> (AUC,ACC,MCC) = (',
-			print ('%0.4f,' % clf_auc),
-			print ('%0.4f,' % clf_acc),
-			print ('%0.4f,' % clf_mcc),
-			print ')'
-
 			# record model coefficients
 			clf_coef = clf_fit.coef_[0];
 			clf_vars = x_train.keys();
-			for varb,coef in zip(clf_vars,clf_coef):
-				df_coef.loc[varb,num_feats]=coef;
-	
-			# record model estimates of P(y=1) for subjects
-			for smp,prob in zip(y_test.index,clf_eval):
-				df_prob.loc[smp,num_feats]=prob;
+			df_coef.loc[clf_vars,num_feats] = clf_coef;
 			
-			#endfor
+			# record model estimates of P(y=1) for subjects
+			df_prob.loc[x_test.index,num_feats] = clf_eval;
 		#endfor
 	
 	# use only static unselected features
@@ -330,27 +342,23 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		df_acc.loc[num_feats,cnt] = clf_acc;
 		df_mcc.loc[num_feats,cnt] = clf_mcc;
 			
-		print '==> (AUC,ACC,MCC) = (',
-		print ('%0.4f,' % clf_auc),
-		print ('%0.4f,' % clf_acc),
-		print ('%0.4f,' % clf_mcc),
-		print ')'
-
 		# record model coefficients
 		clf_coef = clf_fit.coef_[0];
 		clf_vars = x_train.keys();
-		for varb,coef in zip(clf_vars,clf_coef):
-			df_coef.loc[varb,'clinical']=coef;
-		
-		# record model estimates of P(y=!) for subjects
-		for smp,prob in zip(y_test.index,clf_eval):
-			df_prob.loc[smp,'clinical']=prob;
-	
-		#endfor
-	#endif	
-		
+		df_coef.loc[clf_vars,num_feats] = clf_coef;
 			
-	pnl_coef[cnt] = df_coef;
-	pnl_prob[cnt] = df_prob;
+		# record model estimates of P(y=!) for subjects
+		df_prob.loc[x_test.index,num_feats] = clf_eval;
+	
+	#endif
+        pnl_features = pnl_features.join(df_features);		
 
-    return df_auc,df_acc,df_mcc,df_features,pnl_coef,pnl_prob
+	# SAVE AUROC,ACCURACY,and MCC 
+	df_auc.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.auc.txt',sep='\t',header=True,index_col=True);
+	df_acc.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.acc.txt',sep='\t',header=True,index_col=True);
+	df_mcc.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.mcc.txt',sep='\t',header=True,index_col=True);
+	
+	df_coef.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.coef.txt',sep='\t',header=True,index_col=True);
+	df_prob.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.prob.txt',sep='\t',header=True,index_col=True);
+	
+	pnl_features.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.features.txt',sep='\t',header=True,index_col=True);
