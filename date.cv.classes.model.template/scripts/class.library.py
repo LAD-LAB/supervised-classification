@@ -266,7 +266,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			# track which feature is removed
 			features_kept           = x_train.keys()[SFE.support_];
 			feature_removed         = x_train.keys()[~SFE.support_].values[0];
-			df_features.loc[feature_removed,cnt] = num_feats;
+			df_features.loc[feature_removed,cnt] = num_feats+1;
 			
 			#print 'removed --> ',feature_removed,'\t',
 			# transform feature matrices
