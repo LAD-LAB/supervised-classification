@@ -179,16 +179,12 @@ def SVM_RFE_soft_two_stage(**kwargs):
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)];
     
     cnt = int(numperm)*len(cv);
-    df_auc,df_acc,df_mcc = [pd.DataFrame(columns=range(cnt,cnt+len(cv)+1)) for aa in range(3)];
+    #df_auc,df_acc,df_mcc = [pd.DataFrame(columns=range(cnt,cnt+len(cv)+1)) for aa in range(3)];
     #df_auc,df_acc,df_mcc = [pd.DataFrame(columns=range(1,len(cv)+1)) for aa in range(3)];
 	
     # initialize recursive feature elimination objects
     rfe1     = RFE(estimator=clf,n_features_to_select=coarse_1,step=coarse_step_1)  
     
-    pnl_features = pd.DataFrame(index=x.keys())#columns=range(1,len(cv)+1));
-
-    #cnt = (numperm)*len(cv);
-    #cnt = 0;
     for train, test in cv:
         cnt+=1; print "%04.f" %cnt,
 	
@@ -253,9 +249,11 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	        coarse_features = x_train.keys()[rfe1.fit(x_train,y_train).support_] 
        		x_train         = x_train.loc[:,coarse_features];
 
-		df_features = pd.DataFrame(np.ones(x_train.shape[1]),index=x_train.keys(),columns=[cnt]);	
+		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_train.shape[1]),columns=[cnt]) for aa in range(3)];
+		
+		df_features = pd.DataFrame(index=x_train.keys(), columns=[cnt]);	
 		df_coef     = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
-		df_prob     = pd.DataFrame(index=x_test.index,  columns=range(1,x_train.shape[1]));
+		df_prob     = pd.DataFrame(index=x_test.index,   columns=range(1,x_train.shape[1]));
 
 		# finely prune features one by one
 		for num_feats in range(x_train.shape[1])[::-1][:-1]:
@@ -351,7 +349,6 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		df_prob.loc[x_test.index,num_feats] = clf_eval;
 	
 	#endif
-        pnl_features = pnl_features.join(df_features);		
 
 	# SAVE AUROC,ACCURACY,and MCC 
 	df_auc.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.auc.txt',sep='\t',header=True,index_col=True);
@@ -361,4 +358,4 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	df_coef.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.coef.txt',sep='\t',header=True,index_col=True);
 	df_prob.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.prob.txt',sep='\t',header=True,index_col=True);
 	
-	pnl_features.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.features.txt',sep='\t',header=True,index_col=True);
+	df_features.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.features.txt',sep='\t',header=True,index_col=True);

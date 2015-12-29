@@ -272,7 +272,8 @@ if shuffle==0:
 		rfe1             = RFE(estimator=CVCLFS,n_features_to_select=num_features_1,step=coarse_steps_1);
 		coarse_features  = x_use.keys()[rfe1.fit(x_use,y_all).support_];
 		x_use            = x_use.loc[:,coarse_features];
-	        df_features     = pd.DataFrame(np.ones([x_use.shape[1]]),index=x_use.keys(),columns=['rank']); 
+	        
+		df_features     = pd.DataFrame(index=x_use.keys(),columns=['rank']); 
 	
 		df_coef = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));		
 		df_prob = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
