@@ -275,16 +275,23 @@ if shuffle==0:
 		coarse_features  = x_use.keys()[rfe1.fit(x_use,y_all).support_];
 		x_use            = x_use.loc[:,coarse_features];
 	        
-		df_features     = pd.DataFrame(index=x_use.keys(),columns=['rank']); 
+		df_features     = pd.DataFrame(index=x_use.keys(),columns=['rank']);
+
+                if include_static==0:
+                        df_coef     = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));
+                elif include_static==1:
+                        df_coef     = pd.DataFrame(index=list(x_use.keys())+list(static_features.keys()), columns=range(1,x_use.shape[1]));
 	
-		df_coef = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));		
 		df_prob = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
 	
 		# finely prune features one by one
 		for num_feats in range(x_use.shape[1])[::-1][:-1]:
 			#print 'feature #'+str(num_feats)+'\t',			
 
-			#single feature elimination
+                        x_use_keys = list(set(x_use.keys()).difference(static_features.keys()))
+                        x_use      = x_use.loc[:,x_use_keys];
+
+			#single feature elimnation
 			SFE = RFE(CVCLFS,n_features_to_select=num_feats,step=1);
 			SFE = SFE.fit(x_use,y_all);
 
@@ -328,7 +335,7 @@ if shuffle==0:
 			df_coef.loc[clf_vars,num_feats] = clf_coef;
 	
 			#record model estimates of P(y=1) for subjects
-			df_prob.loc[x_use.index,num_feats] = prob;
+			df_prob.loc[x_use.index,num_feats] = clf_eval;
 		#endfor
 
 	elif (include_otus==0) and (include_static==1):

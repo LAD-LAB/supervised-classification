@@ -259,10 +259,16 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			df_coef     = pd.DataFrame(index=list(x_train.keys())+list(static_features.keys()), columns=range(1,x_train.shape[1]));
 		df_prob     = pd.DataFrame(index=x_test.index,   columns=range(1,x_train.shape[1]));
 
+		x_train_save = x_train.copy();
+		x_test_save  = x_test.copy();
+
 		# finely prune features one by one
 		for num_feats in range(x_train.shape[1])[::-1][:-1]:
 		        #print 'feature #'+str(num_feats)+'\t', 
-	
+
+			x_train_keys = list(set(x_train.keys()).difference(static_features.keys()))			
+			x_train      = x_train.loc[:,x_train_keys];
+
 			#single feature elimination
 			SFE = RFE(clf,n_features_to_select=num_feats,step=1);
 			SFE = SFE.fit(x_train,y_train);
@@ -279,8 +285,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 
 			# join non-filtered (static) featuers
 			if include_static==1:
-				x_train = x_train.join(static_features);
-				x_test  = x_test.join(static_features);
+				x_train = x_train.join(static_features,how='inner');
+				x_test  = x_test.join(static_features,how='inner');
 			#endif
 
 			# fit and test classifier with remaining featuers (store AUC)
@@ -292,7 +298,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	
 				x_all    = x_train.append(x_test);
 				clf_eval = pd.DataFrame(clf_fit.decision_function(x_all),index=x_all.index,columns=['bacterial_risk']);
-				x_all    = x_all.join(static_features);
+				x_all    = x_all.join(static_features,how='inner');
 				
 				x_train  = x_all.loc[y_train.index,:];
 				x_test   = x_all.loc[y_test.index,:];
