@@ -139,6 +139,7 @@ y_holdin_df       = pd.read_csv(txt_y_holdin_df,       sep='\t',header=0,index_c
 y_holdout_df      = pd.read_csv(txt_y_holdout_df,      sep='\t',header=0,index_col=0);
 y_all             = pd.read_csv(txt_y_all,             sep='\t',header=0,index_col=0);
 clinical_df       = pd.read_csv(txt_clinical_df,       sep='\t',header=0,index_col=0);
+static_features   = clinical_df;
 
 #######################################################################
 ##Cross-validated model training to approximate generalized performance and feature importances
@@ -219,54 +220,55 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 
 
 if shuffle==0: 
-	
-	#######################################################################################
-	##FINAL MODEL DESCRIPTION: Run classifier on all samples and record selected features
-	#######################################################################################
 
-	################################################################################
-	#Filter data based on frequency of presence of each feature across model samples
-	#################################################################################
-	bfd = pd.DataFrame(binarize(x_all),index=x_all.index,columns=x_all.keys())
-	dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape[0]))[0]]
-	
-	print 'thresholding'
-	print x_all.shape,'-->',	
-	x_use  = x_all.loc[:,dense_features];
-	print x_use.shape
-
-	#######################################################################################
-	# Remove non informative redundant clades 
-	#######################################################################################
-
-	print 'pruning'
-	print x_use.shape,'-->',
-	x_use = dropNonInformativeClades(x_use);
-	print x_use.shape
-
-	#######################################################################################
-	# Transform feature values
-	#######################################################################################
-	
-	if transform==1:
-		print 'transforming with ',transformer 
-		x_use = x_use.apply(transformer)
-		print np.mean(x_use.apply(np.sum,1))
-
-	#######################################################################################
-	# Scale feature arrays
-	#######################################################################################
-	
-	if scale==1:
-		print 'scaling with ',scaler
-		x_use_scale = scaler.fit(x_use);
-		x_use = pd.DataFrame(x_use_scale.transform(x_use), \
-				     index=x_use.index, columns=x_use.keys());
-	#endif
-
-	x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
-	
 	if include_otus==1:
+	
+		#######################################################################################
+		##FINAL MODEL DESCRIPTION: Run classifier on all samples and record selected features
+		#######################################################################################
+
+		################################################################################
+		#Filter data based on frequency of presence of each feature across model samples
+		#################################################################################
+		bfd = pd.DataFrame(binarize(x_all),index=x_all.index,columns=x_all.keys())
+		dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape[0]))[0]]
+		
+		print 'thresholding'
+		print x_all.shape,'-->',	
+		x_use  = x_all.loc[:,dense_features];
+		print x_use.shape
+
+		#######################################################################################
+		# Remove non informative redundant clades 
+		#######################################################################################
+
+		print 'pruning'
+		print x_use.shape,'-->',
+		x_use = dropNonInformativeClades(x_use);
+		print x_use.shape
+
+		#######################################################################################
+		# Transform feature values
+		#######################################################################################
+		
+		if transform==1:
+			print 'transforming with ',transformer 
+			x_use = x_use.apply(transformer)
+			print np.mean(x_use.apply(np.sum,1))
+
+		#######################################################################################
+		# Scale feature arrays
+		#######################################################################################
+		
+		if scale==1:
+			print 'scaling with ',scaler
+			x_use_scale = scaler.fit(x_use);
+			x_use = pd.DataFrame(x_use_scale.transform(x_use), \
+					     index=x_use.index, columns=x_use.keys());
+		#endif
+
+		x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
+	
 	
 		# Narrow down full list of features
 		rfe1             = RFE(estimator=CVCLFS,n_features_to_select=num_features_1,step=coarse_steps_1);
@@ -331,7 +333,7 @@ if shuffle==0:
 
 	elif (include_otus==0) and (include_static==1):
 
-		x_use   = static_features.loc[x_use.index,:];
+		x_use   = static_features.loc[x_all.index,:];
 		df_coef = pd.DataFrame(index=x_use.keys(),columns=['clinical']);
 		df_prob = pd.DataFrame(index=x_use.index, columns=['clinical']);
 	
@@ -343,7 +345,7 @@ if shuffle==0:
 		#compute AUC, accuracy, and MCC
 		clf_auc  = roc_auc_score(y_all,clf_eval);
 		clf_acc  = accuracy_score(y_all,clf_pdct);
-		clf_mcc  = matthews_corrcoef(y_al,clf_pdct);
+		clf_mcc  = matthews_corrcoef(y_all,clf_pdct);
 
 		# record model coefficients
 		clf_coef = clf_fit.coef_[0];
@@ -351,11 +353,13 @@ if shuffle==0:
 		df_coef.loc[clf_vars,'clinical'] = clf_coef;
 		
 		# record model esitmates of P(y==1) for subjects
-		df_prob.loc[x_use.index,'clinical'] = prob;
+		df_prob.loc[x_use.index,'clinical'] = clf_eval;
 	#endif
 
 # SAVE FEATURE LISTS/RANKING
-df_features.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.features.txt',sep='\t',header=True,index_col=True);
+
+if include_otus==1:
+	df_features.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.features.txt',sep='\t',header=True,index_col=True);
 df_coef.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.coef.txt',sep='\t',header=True,index_col=True);
 df_prob.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.prob.txt',sep='\t',header=True,index_col=True);
 

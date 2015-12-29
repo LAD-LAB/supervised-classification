@@ -195,55 +195,56 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	if shuffle==1:
 		np.random.shuffle(y_train.values);
 
-	#################################################################################
-	#Filter data based on frequency of presence of each feature across model samples
-	#################################################################################
-	bfd = pd.DataFrame(binarize(x_train),index=x_train.index,columns=x_train.keys())
-	dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_train.shape[0]))[0]]
-	
-	print 'thresholding'
-	print '(train,test)\t',x_train.shape,x_test.shape,'-->',
-	x_train = x_train.loc[:,dense_features]
-	x_test  = x_test.loc[:,dense_features]
-	print x_train.shape,x_test.shape
 
-	#################################################################################
-	#Remove non-informative redundnat clades
-	#################################################################################
-
-	print 'pruning'
-	print '(train,test)\t',x_train.shape,x_test.shape,'-->',
-	x_train = dropNonInformativeClades(x_train)	
-	x_test  = x_test.loc[:,x_train.keys()];	
-	print x_train.shape,x_test.shape
-
-	#################################################################################
-	#Transform feature values
-	#################################################################################
-
-	if transform==1:
-		print 'transforming with ',transformer
-		x_train = x_train.apply(transformer);
-		x_test  = x_test.apply(transformer);
-
-	#################################################################################
-	#Scale feature arrays
-	#################################################################################
-	
-	if scale==1:
-                print 'scaling with ',scaler
-		x_train_scale = scaler.fit(x_train);
-		x_train       = pd.DataFrame(x_train_scale.transform(x_train), \
-					     index=x_train.index, columns=x_train.keys());
-		x_test        = pd.DataFrame(x_train_scale.transform(x_test),  \
-					     index=x_test.index, columns=x_test.keys());
-	      	
-	#################################################################################
-	#Apply Recrusive Feature Elimination wrapped aroud a user-defined classifier
-	#################################################################################
-	
 	# use only features that are transformed with RFE
 	if include_otus==1: 
+
+		#################################################################################
+		#Filter data based on frequency of presence of each feature across model samples
+		#################################################################################
+		bfd = pd.DataFrame(binarize(x_train),index=x_train.index,columns=x_train.keys())
+		dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_train.shape[0]))[0]]
+		
+		print 'thresholding'
+		print '(train,test)\t',x_train.shape,x_test.shape,'-->',
+		x_train = x_train.loc[:,dense_features]
+		x_test  = x_test.loc[:,dense_features]
+		print x_train.shape,x_test.shape
+
+		#################################################################################
+		#Remove non-informative redundnat clades
+		#################################################################################
+
+		print 'pruning'
+		print '(train,test)\t',x_train.shape,x_test.shape,'-->',
+		x_train = dropNonInformativeClades(x_train)	
+		x_test  = x_test.loc[:,x_train.keys()];	
+		print x_train.shape,x_test.shape
+
+		#################################################################################
+		#Transform feature values
+		#################################################################################
+
+		if transform==1:
+			print 'transforming with ',transformer
+			x_train = x_train.apply(transformer);
+			x_test  = x_test.apply(transformer);
+
+		#################################################################################
+		#Scale feature arrays
+		#################################################################################
+		
+		if scale==1:
+        	        print 'scaling with ',scaler
+			x_train_scale = scaler.fit(x_train);
+			x_train       = pd.DataFrame(x_train_scale.transform(x_train), \
+						     index=x_train.index, columns=x_train.keys());
+			x_test        = pd.DataFrame(x_train_scale.transform(x_test),  \
+						     index=x_test.index, columns=x_test.keys());
+		      	
+		#################################################################################
+		#Apply Recrusive Feature Elimination wrapped aroud a user-defined classifier
+		#################################################################################
 	
 	 	# Narrow down  full list of features to 100                                     
 	        coarse_features = x_train.keys()[rfe1.fit(x_train,y_train).support_] 
@@ -252,7 +253,10 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_train.shape[1]),columns=[cnt]) for aa in range(3)];
 		
 		df_features = pd.DataFrame(index=x_train.keys(), columns=[cnt]);	
-		df_coef     = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
+		if include_static==0:
+			df_coef     = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
+		elif include_static==1:
+			df_coef     = pd.DataFrame(index=list(x_train.keys())+list(static_features.keys()), columns=range(1,x_train.shape[1]));
 		df_prob     = pd.DataFrame(index=x_test.index,   columns=range(1,x_train.shape[1]));
 
 		# finely prune features one by one
@@ -321,9 +325,11 @@ def SVM_RFE_soft_two_stage(**kwargs):
 
 		x_train   = static_features.loc[x_train.index,:];
 		x_test    = static_features.loc[x_test.index,:];
+		
+		df_auc,df_acc,df_mcc = [pd.DataFrame(index=['clinical'],columns=[cnt]) for aa in range(3)];
 	
 		df_coef   = pd.DataFrame(index=x_train.keys(), columns=['clinical']);
-		df_prob   = pd.DataFrame(index=x_train.index,  columns=['clinical']);
+		df_prob   = pd.DataFrame(index=x_test.index,  columns=['clinical']);
 
 		# fit and test classifier with remaining featuers (store AUC)
 		clf_fit  = clf.fit(x_train,y_train);
@@ -336,17 +342,17 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		clf_mcc  = matthews_corrcoef(y_test,clf_pdct);
 
 		# record model performance
-		df_auc.loc[num_feats,cnt] = clf_auc;
-		df_acc.loc[num_feats,cnt] = clf_acc;
-		df_mcc.loc[num_feats,cnt] = clf_mcc;
+		df_auc.loc['clinical',cnt] = clf_auc;
+		df_acc.loc['clinical',cnt] = clf_acc;
+		df_mcc.loc['clinical',cnt] = clf_mcc;
 			
 		# record model coefficients
 		clf_coef = clf_fit.coef_[0];
 		clf_vars = x_train.keys();
-		df_coef.loc[clf_vars,num_feats] = clf_coef;
+		df_coef.loc[clf_vars,'clinical'] = clf_coef;
 			
 		# record model estimates of P(y=!) for subjects
-		df_prob.loc[x_test.index,num_feats] = clf_eval;
+		df_prob.loc[x_test.index,'clinical'] = clf_eval;
 	
 	#endif
 
@@ -358,4 +364,5 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	df_coef.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.coef.txt',sep='\t',header=True,index_col=True);
 	df_prob.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.prob.txt',sep='\t',header=True,index_col=True);
 	
-	df_features.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.features.txt',sep='\t',header=True,index_col=True);
+	if include_otus:
+		df_features.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.features.txt',sep='\t',header=True,index_col=True);
