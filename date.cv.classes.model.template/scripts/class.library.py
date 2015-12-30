@@ -190,7 +190,9 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	
 	# split data ino training and testing folds
         x_train,x_test,y_train,y_test = split_only(x,y,train,test);
-
+	s_train = static_features.loc[x_train.index,:];
+	s_test  = static_features.loc[x_test.index,:];
+		
 	# shuffle labels if requested
 	if shuffle==1:
 		np.random.shuffle(y_train.values);
@@ -242,13 +244,11 @@ def SVM_RFE_soft_two_stage(**kwargs):
 						     index=x_test.index,  columns=x_test.keys());
 
 			# scaling clinical variables
-			static_train  = static_features.loc[x_train.index,:];
-		
 			scale_varbs   = ['vbxbase','ageyrs'];
 			for varb in scale_varbs:
-				varb_scale = scaler.fit(static_train.loc[:,varb]);
-				static_features.loc[:,varb] = varb_scale.transform(static_features.loc[:,varb]);  			
-			static_features.to_csv(filepath+'/slurm.log/cv_static_features.txt',sep='\t',header=True,index_col=True);
+				varb_scale = scaler.fit(s_train.loc[:,varb]);
+				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb]);  			
+				s_test.loc[:,varb]  = varb_scale.transform(s_test.loc[:,varb]); 		
 			
 		#################################################################################
 		#Apply Recrusive Feature Elimination wrapped aroud a user-defined classifier
@@ -289,8 +289,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 
 			# join non-filtered (static) featuers
 			if include_static==1:
-				x_train = x_train.join(static_features,how='left');
-				x_test  = x_test.join(static_features,how='left');
+				x_train = x_train.join(s_train,how='left');
+				x_test  = x_test.join(s_test,how='left');
 			#endif
 
 			# fit and test classifier with remaining featuers (store AUC)
@@ -337,10 +337,9 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			# scaling clinical variables
 			scale_varbs   = ['vbxbase','ageyrs'];
 			for varb in scale_varbs:
-				varb_scale = scaler.fit(x_train.loc[:,varb]);
-				static_features.loc[:,varb] = varb_scale.transform(static_features.loc[:,varb]);  			
-			print static_features
-			static_features.to_csv(filepath+'/slurm.log/cv_static_features.txt',sep='\t',header=True,index_col=True);
+				varb_scale          = scaler.fit(s_train.loc[:,varb]);
+				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb]);  			
+				s_test.loc[:,varb]  = varb_scale.transform(s_test.loc[:,varb]);  			
 		
 		df_auc,df_acc,df_mcc = [pd.DataFrame(index=['clinical'],columns=[cnt]) for aa in range(3)];
  		df_coef              = pd.DataFrame(index=x_train.keys(), columns=['clinical']);
