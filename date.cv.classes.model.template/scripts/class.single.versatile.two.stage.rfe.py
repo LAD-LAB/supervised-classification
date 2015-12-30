@@ -275,6 +275,13 @@ if shuffle==0:
 			x_use_scale = scaler.fit(x_use);
 			x_use = pd.DataFrame(x_use_scale.transform(x_use), \
 					     index=x_use.index, columns=x_use.keys());
+		
+			# scaling clinical variables	
+			scale_varbs   = ['vbxbase','ageyrs'];
+			for varb in scale_varbs:
+				varb_scale = scaler.fit(static_features.loc[:,varb]);
+				static_features.loc[:,varb] = varb_scale.transform(static_features.loc[:,varb]);  			
+			#endfor
 		#endif
 
 		x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
@@ -350,6 +357,14 @@ if shuffle==0:
 	elif (include_otus==0) and (include_static==1):
 
 		x_use   = static_features.loc[x_all.index,:];
+		
+		# scaling clinical variables	
+		scale_varbs   = ['vbxbase','ageyrs'];
+		for varb in scale_varbs:
+			varb_scale = scaler.fit(x_use.loc[:,varb]);
+			x_use.loc[:,varb] = varb_scale.transform(x_use.loc[:,varb]);  			
+		#endfor
+
 		df_coef = pd.DataFrame(index=x_use.keys(),columns=['clinical']);
 		df_prob = pd.DataFrame(index=x_use.index, columns=['clinical']);
 	

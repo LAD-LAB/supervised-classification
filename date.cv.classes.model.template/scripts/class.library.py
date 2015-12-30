@@ -239,8 +239,17 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			x_train       = pd.DataFrame(x_train_scale.transform(x_train), \
 						     index=x_train.index, columns=x_train.keys());
 			x_test        = pd.DataFrame(x_train_scale.transform(x_test),  \
-						     index=x_test.index, columns=x_test.keys());
-		      	
+						     index=x_test.index,  columns=x_test.keys());
+
+			# scaling clinical variables
+			static_train  = static_features.loc[x_train.index,:];
+		
+			scale_varbs   = ['vbxbase','ageyrs'];
+			for varb in scale_varbs:
+				varb_scale = scaler.fit(static_train.loc[:,varb]);
+				static_features.loc[:,varb] = varb_scale.transform(static_features.loc[:,varb]);  			
+			static_features.to_csv(filepath+'/slurm.log/cv_static_features.txt',sep='\t',header=True,index_col=True);
+			
 		#################################################################################
 		#Apply Recrusive Feature Elimination wrapped aroud a user-defined classifier
 		#################################################################################
@@ -321,6 +330,17 @@ def SVM_RFE_soft_two_stage(**kwargs):
 
 		x_train   = static_features.loc[x_train.index,:];
 		x_test    = static_features.loc[x_test.index,:];
+		
+		if scale==1:
+        	        print 'scaling with ',scaler
+
+			# scaling clinical variables
+			scale_varbs   = ['vbxbase','ageyrs'];
+			for varb in scale_varbs:
+				varb_scale = scaler.fit(x_train.loc[:,varb]);
+				static_features.loc[:,varb] = varb_scale.transform(static_features.loc[:,varb]);  			
+			print static_features
+			static_features.to_csv(filepath+'/slurm.log/cv_static_features.txt',sep='\t',header=True,index_col=True);
 		
 		df_auc,df_acc,df_mcc = [pd.DataFrame(index=['clinical'],columns=[cnt]) for aa in range(3)];
  		df_coef              = pd.DataFrame(index=x_train.keys(), columns=['clinical']);
