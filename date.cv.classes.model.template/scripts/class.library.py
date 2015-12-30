@@ -155,7 +155,7 @@ def subset_data(list_of_criteria,mapping_df,features_df):
 
 def SVM_RFE_soft_two_stage(**kwargs):
     
-    cv,clf                                = [kwargs.get(varb) for varb in ['arg_ext_cv','clf']];
+    cv,clf,clf_static                     = [kwargs.get(varb) for varb in ['arg_ext_cv','clf','clf_static']];
     x,y,static_features                   = [kwargs.get(varb) for varb in ['x','y','static_features']];
     coarse_1,coarse_step_1                = [int(kwargs.get(varb)) for varb in ['coarse_1','coarse_step_1']];
     frequency_cutoff                      = [float(kwargs.get(varb)) for varb in ['frequency_cutoff']][0]; 
@@ -194,7 +194,6 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	# shuffle labels if requested
 	if shuffle==1:
 		np.random.shuffle(y_train.values);
-
 
 	# use only features that are transformed with RFE
 	if include_otus==1: 
@@ -250,21 +249,18 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	        coarse_features = x_train.keys()[rfe1.fit(x_train,y_train).support_] 
        		x_train         = x_train.loc[:,coarse_features];
 
-		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_train.shape[1]),columns=[cnt]) for aa in range(3)];
+		# initializes frames for recording data
+		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_train.shape[1]),columns=[cnt]) for aa in range(3)];		
+		df_features          = pd.DataFrame(index=x_train.keys(), columns=[cnt]);	
+		df_prob              = pd.DataFrame(index=x_test.index,   columns=range(1,x_train.shape[1]));
 		
-		df_features = pd.DataFrame(index=x_train.keys(), columns=[cnt]);	
-		if include_static==0:
+		if   include_static==0:
 			df_coef     = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
 		elif include_static==1:
 			df_coef     = pd.DataFrame(index=list(x_train.keys())+list(static_features.keys()), columns=range(1,x_train.shape[1]));
-		df_prob     = pd.DataFrame(index=x_test.index,   columns=range(1,x_train.shape[1]));
-
-		x_train_save = x_train.copy();
-		x_test_save  = x_test.copy();
 
 		# finely prune features one by one
 		for num_feats in range(x_train.shape[1])[::-1][:-1]:
-		        #print 'feature #'+str(num_feats)+'\t', 
 
 			x_train_keys = list(set(x_train.keys()).difference(static_features.keys()))			
 			x_train      = x_train.loc[:,x_train_keys];
@@ -278,7 +274,6 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			feature_removed         = x_train.keys()[~SFE.support_].values[0];
 			df_features.loc[feature_removed,cnt] = num_feats+1;
 			
-			#print 'removed --> ',feature_removed,'\t',
 			# transform feature matrices
 			x_train  = x_train.loc[:,features_kept];
 			x_test   = x_test.loc[:,features_kept];      		
@@ -293,6 +288,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			clf_fit  = clf.fit(x_train,y_train);
 			clf_eval = clf_fit.decision_function(x_test);
 			clf_pdct = clf_fit.predict(x_test);
+			clf_coef = clf_fit.coef_[0];
 
 			if include_static_with_prob==1:
 	
@@ -303,24 +299,18 @@ def SVM_RFE_soft_two_stage(**kwargs):
 				x_train  = x_all.loc[y_train.index,:];
 				x_test   = x_all.loc[y_test.index,:];
 
-				clf_fit  = clf.fit(x_train,y_train);
+				clf_fit  = clf_static.fit(x_train,y_train);
 				clf_eval = clf_fit.decision_function(x_test);
 				clf_pdct = clf_fit.predict(x_test);
-				
-			# compute AUC, accuracy, and MCC
-			clf_auc  = roc_auc_score(y_test,clf_eval);
-			clf_acc  = accuracy_score(y_test,clf_pdct);
-			clf_mcc  = matthews_corrcoef(y_test,clf_pdct);
+				clf_coef = clf_fit.coef_[0];
 
-			# record model performance
-			df_auc.loc[num_feats,cnt] = clf_auc;
-			df_acc.loc[num_feats,cnt] = clf_acc;
-			df_mcc.loc[num_feats,cnt] = clf_mcc;
-			
+			# compute AUC, accuracy, and MCC
+			df_auc.loc[num_feats,cnt]  = roc_auc_score(y_test,clf_eval);
+			df_acc.loc[num_feats,cnt]  = accuracy_score(y_test,clf_pdct);
+			df_mcc.loc[num_feats,cnt]  = matthews_corrcoef(y_test,clf_pdct);
+
 			# record model coefficients
-			clf_coef = clf_fit.coef_[0];
-			clf_vars = x_train.keys();
-			df_coef.loc[clf_vars,num_feats] = clf_coef;
+			df_coef.loc[x_train.keys(),num_feats] = clf_coef;
 			
 			# record model estimates of P(y=1) for subjects
 			df_prob.loc[x_test.index,num_feats] = clf_eval;
@@ -333,29 +323,22 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		x_test    = static_features.loc[x_test.index,:];
 		
 		df_auc,df_acc,df_mcc = [pd.DataFrame(index=['clinical'],columns=[cnt]) for aa in range(3)];
-	
-		df_coef   = pd.DataFrame(index=x_train.keys(), columns=['clinical']);
-		df_prob   = pd.DataFrame(index=x_test.index,  columns=['clinical']);
+ 		df_coef              = pd.DataFrame(index=x_train.keys(), columns=['clinical']);
+		df_prob              = pd.DataFrame(index=x_test.index,  columns=['clinical']);
 
 		# fit and test classifier with remaining featuers (store AUC)
-		clf_fit  = clf.fit(x_train,y_train);
+		clf_fit  = clf_static.fit(x_train,y_train);
 		clf_eval = clf_fit.decision_function(x_test);
 		clf_pdct = clf_fit.predict(x_test);
+		clf_coef = clf_fit.coef_[0];
 
 		# compute AUC, accuracy, and MCC
-		clf_auc  = roc_auc_score(y_test,clf_eval);
-		clf_acc  = accuracy_score(y_test,clf_pdct);
-		clf_mcc  = matthews_corrcoef(y_test,clf_pdct);
+		df_auc.loc['clinical',cnt] = roc_auc_score(y_test,clf_eval);
+		df_acc.loc['clinical',cnt] = accuracy_score(y_test,clf_pdct);
+		df_mcc.loc['clinical',cnt] = matthews_corrcoef(y_test,clf_pdct);
 
-		# record model performance
-		df_auc.loc['clinical',cnt] = clf_auc;
-		df_acc.loc['clinical',cnt] = clf_acc;
-		df_mcc.loc['clinical',cnt] = clf_mcc;
-			
 		# record model coefficients
-		clf_coef = clf_fit.coef_[0];
-		clf_vars = x_train.keys();
-		df_coef.loc[clf_vars,'clinical'] = clf_coef;
+		df_coef.loc[x_train.keys(),'clinical'] = clf_coef;
 			
 		# record model estimates of P(y=!) for subjects
 		df_prob.loc[x_test.index,'clinical'] = clf_eval;

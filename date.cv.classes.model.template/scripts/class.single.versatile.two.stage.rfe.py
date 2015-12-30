@@ -13,7 +13,7 @@
 #  x_holdin_df
 #  x_holdout_df
 #  CVS
-#  CVCLFS
+#  clf
 #  num_features
 #  coarse_steps     
 #  fine_steps       
@@ -173,17 +173,26 @@ elif TSF=="LOG":
 else:
 	transformer = 'none';
 
-## CHOOSE CLASSIFIER
+## CHOOSE CLASSIFIER FOR MICROBIOTA MODELS
 if    CLSS  == 'svm.l1':
-        CVCLFS   = SVC(kernel='linear',probability=True,shrinking=True,cache_size=2000,C=100,random_state=random.randint(1,10**9));#24289074);
+        clf   = SVC(kernel='linear',probability=True,shrinking=True,cache_size=2000,C=100,random_state=random.randint(1,10**9));#24289074);
 elif  CLSS  == 'svm.l2':
-        CVCLFS   = SVC(kernel='linear',probability=True,shrinking=False,cache_size=2000,C=100,random_state=random.randint(1,10**9));#24289074);
+        clf   = SVC(kernel='linear',probability=True,shrinking=False,cache_size=2000,C=100,random_state=random.randint(1,10**9));#24289074);
 elif  CLSS  == 'log.l1':
-        CVCLFS   = LogisticRegression('l1',C=100,random_state=random.randint(1,10**9));
+        clf   = LogisticRegression('l1',C=100,random_state=random.randint(1,10**9));
 elif  CLSS  == 'log.l2':
-        CVCLFS   = LogisticRegression('l2',C=100,random_state=random.randint(1,10**9));
+        clf   = LogisticRegression('l2',C=100,random_state=random.randint(1,10**9));
 #endif
 
+## CHOOSE CLASSIFIER FOR CLINICAL AND JOINT MODELS
+if    CLSSTATIC  == 'svm.l1':
+        clf_static   = SVC(kernel='linear',probability=True,shrinking=True,cache_size=2000,C=100,random_state=random.randint(1,10**9));#24289074);
+elif  CLSSTATIC  == 'svm.l2':
+        clf_static   = SVC(kernel='linear',probability=True,shrinking=False,cache_size=2000,C=100,random_state=random.randint(1,10**9));#24289074);
+elif  CLSSTATIC  == 'log.l1':
+        clf_static   = LogisticRegression('l1',C=100,random_state=random.randint(1,10**9));
+elif  CLSSTATIC  == 'log.l2':
+        clf_static   = LogisticRegression('l2',C=100,random_state=random.randint(1,10**9));
 
 print 'holdin\t',   x_holdin_df.shape,  y_holdin_df.shape
 print 'holdout\t',  x_holdout_df.shape, y_holdout_df.shape
@@ -193,7 +202,7 @@ print 'clinical\t', clinical_df.shape
 print 'cross_validaiton\t',cross_validation
 print 'num_features\t',num_features_1
 print 'coarse_steps\t',coarse_steps_1
-print 'CVCLFS\t',CVCLFS
+print 'clf\t',clf
 print '(transform with transformer)\t',(transform,transformer)
 print '(scale with scaler)\t',(scale,scaler)
 print 'shuffle\t',shuffle
@@ -204,7 +213,8 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 		             static_features = clinical_df,\
 			            coarse_1 = num_features_1,\
 			       coarse_step_1 = coarse_steps_1,\
-				         clf = CVCLFS,\
+				         clf = clf,\
+				  clf_static = clf_static,\
 			    frequency_cutoff = frequency_cutoff,\
 			           transform = transform,\
   				 transformer = transformer,\
@@ -269,37 +279,35 @@ if shuffle==0:
 
 		x_use.to_csv(filepath+'/slurm.log/x_all_final_use.txt',sep='\t',header=True,index_col=True);
 	
-	
 		# Narrow down full list of features
-		rfe1             = RFE(estimator=CVCLFS,n_features_to_select=num_features_1,step=coarse_steps_1);
+		rfe1             = RFE(estimator=clf,n_features_to_select=num_features_1,step=coarse_steps_1);
 		coarse_features  = x_use.keys()[rfe1.fit(x_use,y_all).support_];
 		x_use            = x_use.loc[:,coarse_features];
 	        
-		df_features     = pd.DataFrame(index=x_use.keys(),columns=['rank']);
+		# initialize data recording frames
+		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_train.shape[1]),columns=[aa]) for aa in ['auc','acc','mcc']];		
+		df_features          = pd.DataFrame(index=x_use.keys(),columns=['rank']);
+		df_prob              = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
 
                 if include_static==0:
-                        df_coef     = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));
+                        df_coef  = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));
                 elif include_static==1:
-                        df_coef     = pd.DataFrame(index=list(x_use.keys())+list(static_features.keys()), columns=range(1,x_use.shape[1]));
-	
-		df_prob = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
+                        df_coef  = pd.DataFrame(index=list(x_use.keys())+list(static_features.keys()), columns=range(1,x_use.shape[1]));
 	
 		# finely prune features one by one
 		for num_feats in range(x_use.shape[1])[::-1][:-1]:
-			#print 'feature #'+str(num_feats)+'\t',			
 
                         x_use_keys = list(set(x_use.keys()).difference(static_features.keys()))
                         x_use      = x_use.loc[:,x_use_keys];
 
 			#single feature elimnation
-			SFE = RFE(CVCLFS,n_features_to_select=num_feats,step=1);
+			SFE = RFE(clf,n_features_to_select=num_feats,step=1);
 			SFE = SFE.fit(x_use,y_all);
 
 			#track which feature is removed	
 			features_kept               = x_use.keys()[SFE.support_];
 			feature_removed             = x_use.keys()[~SFE.support_].values[0];
 			df_features.loc[feature_removed,'rank'] = num_feats;
-			#print 'removed --> ',feature_removed,	
 
 			#transform featuer matrices
 			x_use = x_use.loc[:,features_kept];
@@ -310,9 +318,10 @@ if shuffle==0:
 			#endif
 			
 			#fit and test classifier with remaining features 
-			clf_fit  = CVCLFS.fit(x_use,y_all);
+			clf_fit  = clf.fit(x_use,y_all);
 			clf_eval = clf_fit.decision_function(x_use);
 			clf_pdct = clf_fit.predict(x_use);
+			clf_coef = clf_fit.coef_[0];
 
                         if include_static_with_prob==1:
 
@@ -320,19 +329,19 @@ if shuffle==0:
                                 clf_eval = pd.DataFrame(clf_fit.decision_function(x_all),index=x_all.index,columns=['bacterial_risk']);
                                 x_all    = x_all.join(static_features);
 
-                                clf_fit  = clf.fit(x_use,y_all);
+                                clf_fit  = clf_static.fit(x_use,y_all);
                                 clf_eval = clf_fit.decision_function(x_all);
                                 clf_pdct = clf_fit.predict(x_use);		
+				clf_coef = clf_fit.coef_[0];
+
 	
-			#compute AUC, accuracy, and MCC
-			clf_auc = roc_auc_score(y_all,clf_eval);
-			clf_acc = accuracy_score(y_all,clf_pdct);
-			clf_mcc = matthews_corrcoef(y_all,clf_pdct);
-		
+			# compute AUC, accuracy, and MCC
+			df_auc.loc[num_feats,'auc']  = roc_auc_score(y_all,clf_eval);
+			df_acc.loc[num_feats,'acc']  = accuracy_score(y_all,clf_pdct);
+			df_mcc.loc[num_feats,'mcc']  = matthews_corrcoef(y_all,clf_pdct);
+			
 			#record model coefficients
-			clf_coef = clf_fit.coef_[0];
-			clf_vars = x_use.keys();
-			df_coef.loc[clf_vars,num_feats] = clf_coef;
+			df_coef.loc[x_use.keys(),num_feats] = clf_coef;
 	
 			#record model estimates of P(y=1) for subjects
 			df_prob.loc[x_use.index,num_feats] = clf_eval;
@@ -345,30 +354,35 @@ if shuffle==0:
 		df_prob = pd.DataFrame(index=x_use.index, columns=['clinical']);
 	
 		#fit and test classifier 
-		clf_fit  = CVCLFS.fit(x_use,y_all);
+		clf_fit  = clf_static.fit(x_use,y_all);
 		clf_eval = clf_fit.decision_function(x_use);
 		clf_pdct = clf_fit.predict(x_use);
+		clf_coef = clf_fit.coef_[0];
 
-		#compute AUC, accuracy, and MCC
-		clf_auc  = roc_auc_score(y_all,clf_eval);
-		clf_acc  = accuracy_score(y_all,clf_pdct);
-		clf_mcc  = matthews_corrcoef(y_all,clf_pdct);
+		# compute AUC, accuracy, and MCC
+		df_auc.loc['clinical','auc'] = roc_auc_score(y_all,clf_eval);
+		df_acc.loc['clinical','acc'] = accuracy_score(y_all,clf_pdct);
+		df_mcc.loc['clinical','mcc'] = matthews_corrcoef(y_all,clf_pdct);
 
 		# record model coefficients
-		clf_coef = clf_fit.coef_[0];
-		clf_vars = x_use.keys();
-		df_coef.loc[clf_vars,'clinical'] = clf_coef;
+		df_coef.loc[x_use.keys(),'clinical'] = clf_coef;
 		
 		# record model esitmates of P(y==1) for subjects
 		df_prob.loc[x_use.index,'clinical'] = clf_eval;
 	#endif
 
+
+# SAVE AUROC,ACCURACY,and MCC 
+df_auc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.auc.txt',sep='\t',header=True,index_col=True);
+df_acc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.acc.txt',sep='\t',header=True,index_col=True);
+df_mcc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.mcc.txt',sep='\t',header=True,index_col=True);
+
 # SAVE FEATURE LISTS/RANKING
+df_coef.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.coef.txt',sep='\t',header=True,index_col=True);
+df_prob.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.prob.txt',sep='\t',header=True,index_col=True);
 
 if include_otus==1:
 	df_features.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.features.txt',sep='\t',header=True,index_col=True);
-df_coef.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.coef.txt',sep='\t',header=True,index_col=True);
-df_prob.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.prob.txt',sep='\t',header=True,index_col=True);
 
 ##########################################################
 # end of script		   
