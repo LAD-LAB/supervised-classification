@@ -314,7 +314,7 @@ if shuffle==0:
 
 			#join non-filtered (static) features
 			if include_static==1:
-				x_use = x_use.join(static_features);
+				x_use = x_use.join(static_features,how='left');
 			#endif
 			
 			#fit and test classifier with remaining features 
@@ -323,16 +323,16 @@ if shuffle==0:
 			clf_pdct = clf_fit.predict(x_use);
 			clf_coef = clf_fit.coef_[0];
 
-                        if include_static_with_prob==1:
-
-                                x_all    = x_train.append(x_test);
-                                clf_eval = pd.DataFrame(clf_fit.decision_function(x_all),index=x_all.index,columns=['bacterial_risk']);
-                                x_all    = x_all.join(static_features);
-
-                                clf_fit  = clf_static.fit(x_use,y_all);
-                                clf_eval = clf_fit.decision_function(x_all);
-                                clf_pdct = clf_fit.predict(x_use);		
-				clf_coef = clf_fit.coef_[0];
+#                        if include_static_with_prob==1:
+#
+#                                x_all_tmp = x_train.append(x_test);
+#                                clf_eval  = pd.DataFrame(clf_fit.decision_function(x_all_tmp),index=x_all_tmp.index,columns=['bacterial_risk']);
+#                                x_all_tmp = x_all_tmp.join(static_features,how='left');
+#
+#                                clf_fit  = clf_static.fit(x_all_tmp,y_all.loc[x_all_tmp.index]);
+#                                clf_eval = clf_fit.decision_function(x_all_tmp);
+#                                clf_pdct = clf_fit.predict(x_use);		
+#				clf_coef = clf_fit.coef_[0];
 
 	
 			# compute AUC, accuracy, and MCC

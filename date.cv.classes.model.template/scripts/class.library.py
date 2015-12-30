@@ -280,8 +280,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 
 			# join non-filtered (static) featuers
 			if include_static==1:
-				x_train = x_train.join(static_features,how='inner');
-				x_test  = x_test.join(static_features,how='inner');
+				x_train = x_train.join(static_features,how='left');
+				x_test  = x_test.join(static_features,how='left');
 			#endif
 
 			# fit and test classifier with remaining featuers (store AUC)
@@ -290,19 +290,19 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			clf_pdct = clf_fit.predict(x_test);
 			clf_coef = clf_fit.coef_[0];
 
-			if include_static_with_prob==1:
+			#if include_static_with_prob==1:
 	
-				x_all    = x_train.append(x_test);
-				clf_eval = pd.DataFrame(clf_fit.decision_function(x_all),index=x_all.index,columns=['bacterial_risk']);
-				x_all    = x_all.join(static_features,how='inner');
-				
-				x_train  = x_all.loc[y_train.index,:];
-				x_test   = x_all.loc[y_test.index,:];
+			#	x_all    = x_train.append(x_test);
+			#	clf_eval = pd.DataFrame(clf_fit.decision_function(x_all),index=x_all.index,columns=['bacterial_risk']);
+			#	x_all    = x_all.join(static_features,how='left');
+			#	
+			#	x_train_tmp  = x_all.loc[y_train.index,:];
+			#	x_test_tmp   = x_all.loc[y_test.index,:];
 
-				clf_fit  = clf_static.fit(x_train,y_train);
-				clf_eval = clf_fit.decision_function(x_test);
-				clf_pdct = clf_fit.predict(x_test);
-				clf_coef = clf_fit.coef_[0];
+			#	clf_fit  = clf_static.fit(x_train_tmp,y_train_tmp);
+			#	clf_eval = clf_fit.decision_function(x_test_tmp);
+			#	clf_pdct = clf_fit.predict(x_test_tmp);
+			#	clf_coef = clf_fit.coef_[0];
 
 			# compute AUC, accuracy, and MCC
 			df_auc.loc[num_feats,cnt]  = roc_auc_score(y_test,clf_eval);
