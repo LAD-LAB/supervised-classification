@@ -217,7 +217,7 @@ fid.write('#SBATCH --time-min=240\n');
 fid.write('#SBATCH --mem=4096MB\n');
 fid.write('#SBATCH --nice=500\n');
 fid.write('#SBATCH --array=0-'+str(numperm-1)+'%180\n\n');
-fid.write('source /home/lad44/davidlab/users/fsm/cholera/virtual_python_cholera/bin/activate\n\n');
+fid.write('source /home/lad44/davidlab/users/fsm/cholera/vpython/bin/activate\n\n');
 fid.write('out_path='          +filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.out\n');
 fid.write('err_path='          +filepath+'/slurm.log/itr.$SLURM_ARRAY_TASK_ID.err\n\n');
 fid.write('y_holdin_df='       +txt_y_holdin_df        +' \n');#+filepath+'/slurm.log/y.in.$SLURM_ARRAY_TASK_ID.txt'  +' \n');

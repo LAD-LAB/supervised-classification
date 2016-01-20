@@ -3,7 +3,7 @@
 #SBATCH --time-min=1200
 #SBATCH --mem=4096MB
 
-source /home/lad44/davidlab/users/fsm/cholera/virtual_python_cholera/bin/activate
+source /home/lad44/davidlab/users/fsm/cholera/vpython/bin/activate
 
 prefix=$1
 simname=$(basename $prefix)
