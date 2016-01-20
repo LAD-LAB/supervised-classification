@@ -292,7 +292,7 @@ if shuffle==0:
 		x_use            = x_use.loc[:,coarse_features];
 	        
 		# initialize data recording frames
-		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_train.shape[1]),columns=[aa]) for aa in ['auc','acc','mcc']];		
+		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_use.shape[1]),columns=[aa]) for aa in ['auc','acc','mcc']];		
 		df_features          = pd.DataFrame(index=x_use.keys(),columns=['rank']);
 		df_prob              = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
 
