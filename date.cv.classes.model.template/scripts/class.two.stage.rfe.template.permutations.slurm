@@ -3,7 +3,7 @@
 #SBATCH --time-min=120
 #SBATCH --mem=1024MB
 
-source /home/lad44/davidlab/users/fsm/cholera/vpython/bin/activate
+source /home/lad44/davidlab/users/fsm/smic_study/vpython/bin/activate
 
 prefix=
 simname=
