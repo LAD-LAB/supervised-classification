@@ -153,7 +153,7 @@ elif    CVS[0:3]=="SSS":
             cross_validation = StratifiedShuffleSplit(np.ravel(y_all),n_iter=num_iterations,test_size=test_pct,random_state=random.randint(1,10**9));
 elif    CVS[0:3]=="SKF":
             num_folds        = int(CVS.split('.')[1]);
-            cross_validation = StratifiedKFold(np.ravel(y_all),n_folds=num_folds,random_state=random.randint(1,10**9)); 
+            cross_validation = StratifiedKFold(np.ravel(y_all),n_folds=num_folds,shuffle=True,random_state=random.randint(1,10**9)); 
 elif    CVS=="holdout_validation":
             cross_validation = [(np.array(range(0,x_holdin_df.shape[0])), np.array(range(x_holdin_df.shape[0],x_all.shape[0])))]; 
 #endif
