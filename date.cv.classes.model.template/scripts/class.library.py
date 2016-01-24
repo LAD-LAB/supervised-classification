@@ -254,7 +254,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		#Apply Recrusive Feature Elimination wrapped aroud a user-defined classifier
 		#################################################################################
 	
-	 	# Narrow down  full list of features to 100                                     
+	 	# Narrow down  full list of features to first threshold                                     
 	        coarse_features = x_train.keys()[rfe1.fit(x_train,y_train).support_] 
        		x_train         = x_train.loc[:,coarse_features];
 
@@ -263,11 +263,13 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		df_features          = pd.DataFrame(index=x_train.keys(), columns=[cnt]);	
 		df_prob              = pd.DataFrame(index=x_test.index,   columns=range(1,x_train.shape[1]));
 		
-		if   include_static==0:
+		if   (include_static==0) and (include_static_with_prob==0):
 			df_coef     = pd.DataFrame(index=x_train.keys(), columns=range(1,x_train.shape[1])); 
+		elif include_static_with_prob==1:
+			df_coef     = pd.DataFrame(index=['bacterial_risk']+list(static_features.keys()), columns=range(1,x_train.shape[1]));
 		elif include_static==1:
 			df_coef     = pd.DataFrame(index=list(x_train.keys())+list(static_features.keys()), columns=range(1,x_train.shape[1]));
-
+		
 		# finely prune features one by one
 		for num_feats in range(x_train.shape[1])[::-1][:-1]:
 
@@ -299,19 +301,19 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			clf_pdct = clf_fit.predict(x_test);
 			clf_coef = clf_fit.coef_[0];
 
-			#if include_static_with_prob==1:
+			if include_static_with_prob==1:
 	
-			#	x_all    = x_train.append(x_test);
-			#	clf_eval = pd.DataFrame(clf_fit.decision_function(x_all),index=x_all.index,columns=['bacterial_risk']);
-			#	x_all    = x_all.join(static_features,how='left');
-			#	
-			#	x_train_tmp  = x_all.loc[y_train.index,:];
-			#	x_test_tmp   = x_all.loc[y_test.index,:];
-
-			#	clf_fit  = clf_static.fit(x_train_tmp,y_train_tmp);
-			#	clf_eval = clf_fit.decision_function(x_test_tmp);
-			#	clf_pdct = clf_fit.predict(x_test_tmp);
-			#	clf_coef = clf_fit.coef_[0];
+				x_all    = x_train.append(x_test);
+				x_eval = pd.DataFrame(clf_fit.decision_function(x_all),index=x_all.index,columns=['bacterial_risk']);
+				x_all    = x_eval.join(static_features,how='left');
+				
+				x_train_tmp  = x_all.loc[y_train.index,:];
+				x_test_tmp   = x_all.loc[y_test.index,:];
+				
+				clf_fit  = clf_static.fit(x_train_tmp,y_train);
+				clf_eval = clf_fit.decision_function(x_test_tmp);
+				clf_pdct = clf_fit.predict(x_test_tmp);
+				clf_coef = clf_fit.coef_[0];
 
 			# compute AUC, accuracy, and MCC
 			df_auc.loc[num_feats,cnt]  = roc_auc_score(y_test,clf_eval);
@@ -319,7 +321,10 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			df_mcc.loc[num_feats,cnt]  = matthews_corrcoef(y_test,clf_pdct);
 
 			# record model coefficients
-			df_coef.loc[x_train.keys(),num_feats] = clf_coef;
+			if include_static_with_prob==1:
+			    df_coef.loc[x_train_tmp.keys(),num_feats] = clf_coef;
+			else:
+			    df_coef.loc[x_train.keys(),num_feats] = clf_coef;
 			
 			# record model estimates of P(y=1) for subjects
 			df_prob.loc[x_test.index,num_feats] = clf_eval;

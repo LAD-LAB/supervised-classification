@@ -296,8 +296,10 @@ if shuffle==0:
 		df_features          = pd.DataFrame(index=x_use.keys(),columns=['rank']);
 		df_prob              = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
 
-                if include_static==0:
-                        df_coef  = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));
+                if (include_static==0) and (include_static_with_prob==0):
+                        df_coef  = pd.DataFrame(index=x_use.keys(), columns=range(1,x_use.shape[1]));	
+		elif include_static_with_prob==1:
+			df_coef     = pd.DataFrame(index=['bacterial_risk']+list(static_features.keys()), columns=range(1,x_train.shape[1]));
                 elif include_static==1:
                         df_coef  = pd.DataFrame(index=list(x_use.keys())+list(static_features.keys()), columns=range(1,x_use.shape[1]));
 	
@@ -330,16 +332,16 @@ if shuffle==0:
 			clf_pdct = clf_fit.predict(x_use);
 			clf_coef = clf_fit.coef_[0];
 
-#                        if include_static_with_prob==1:
-#
-#                                x_all_tmp = x_train.append(x_test);
-#                                clf_eval  = pd.DataFrame(clf_fit.decision_function(x_all_tmp),index=x_all_tmp.index,columns=['bacterial_risk']);
-#                                x_all_tmp = x_all_tmp.join(static_features,how='left');
-#
-#                                clf_fit  = clf_static.fit(x_all_tmp,y_all.loc[x_all_tmp.index]);
-#                                clf_eval = clf_fit.decision_function(x_all_tmp);
-#                                clf_pdct = clf_fit.predict(x_use);		
-#				clf_coef = clf_fit.coef_[0];
+                        if include_static_with_prob==1:
+
+                                x_all_tmp = x_train.append(x_test);
+                                x_all_eval  = pd.DataFrame(clf_fit.decision_function(x_all_tmp),index=x_all_tmp.index,columns=['bacterial_risk']);
+                                x_all_tmp = x_all_eval.join(static_features,how='left');
+
+                                clf_fit  = clf_static.fit(x_all_tmp,y_all.loc[x_all_tmp.index]);
+                                clf_eval = clf_fit.decision_function(x_all_tmp);
+                                clf_pdct = clf_fit.predict(x_all_tmp);		
+				clf_coef = clf_fit.coef_[0];
 
 	
 			# compute AUC, accuracy, and MCC
@@ -348,7 +350,10 @@ if shuffle==0:
 			df_mcc.loc[num_feats,'mcc']  = matthews_corrcoef(y_all,clf_pdct);
 			
 			#record model coefficients
-			df_coef.loc[x_use.keys(),num_feats] = clf_coef;
+			if include_static_with_prob==1:
+			    df_coef.loc[x_all_tmp.keys(),num_feats] = clf_coef;
+			else:
+			    df_coef.loc[x_use.keys(),num_feats] = clf_coef;
 	
 			#record model estimates of P(y=1) for subjects
 			df_prob.loc[x_use.index,num_feats] = clf_eval;
