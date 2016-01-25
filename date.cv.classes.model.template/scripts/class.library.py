@@ -165,6 +165,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
     scaler,transformer                    = [kwargs.get(varb) for varb in ['scaler','transformer']];
     scaler_static,transformer_static      = [kwargs.get(varb) for varb in ['scaler_static','transformer_static']];
     scale_static_varbs                    = [kwargs.get(varb) for varb in ['scale_static_varbs']];
+    transform_static_varbs                = [kwargs.get(varb) for varb in ['transform_static_varbs']];
     include_static_with_prob              = [kwargs.get(varb) for varb in ['include_static_with_prob']][0];	
     filepath    			  = [kwargs.get(varb) for varb in ['filepath']][0];
     numperm     			  = [str(kwargs.get(varb)) for varb in ['numperm']][0];
@@ -234,6 +235,12 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			x_train = x_train.apply(transformer);
 			x_test  = x_test.apply(transformer);
 
+		if transform_static==1:
+			transform_varbs = transform_static_varbs;
+			print 'transforming clinical variables with ',transformer_static
+			s_train = s_train.loc[:,transform_static_varbs].apply(transformer_static);
+			s_test  = s_test.loc[:,transform_static_varbs].apply(transformer_static);
+
 		#################################################################################
 		#Scale feature arrays
 		#################################################################################
@@ -246,10 +253,11 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			x_test        = pd.DataFrame(x_train_scale.transform(x_test),  \
 						     index=x_test.index,  columns=x_test.keys());
 
+		if scale_static==1:
 			# scaling clinical variables
 			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
-				varb_scale = scaler.fit(s_train.loc[:,varb]);
+				varb_scale = scaler_static.fit(s_train.loc[:,varb]);
 				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb]);  			
 				s_test.loc[:,varb]  = varb_scale.transform(s_test.loc[:,varb]); 		
 			
@@ -342,14 +350,18 @@ def SVM_RFE_soft_two_stage(**kwargs):
 
 		x_train   = static_features.loc[x_train.index,:];
 		x_test    = static_features.loc[x_test.index,:];
+	
+		if transform_static==1:
+			s_train = s_train.loc[:,transform_static_varbs].apply(transformer_static);		
+			s_test  = s_test.loc[:,transform_static_varbs].apply(transformer_static);		
 		
-		if scale==1:
-        	        print 'scaling with ',scaler
+		if scale_static_varbs==1:
+        	        print 'scaling clinical variables with ',scaler_static
 
 			# scaling clinical variables
 			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
-				varb_scale          = scaler.fit(s_train.loc[:,varb]);
+				varb_scale          = scaler_static.fit(s_train.loc[:,varb]);
 				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb]);  			
 				s_test.loc[:,varb]  = varb_scale.transform(s_test.loc[:,varb]);  			
 		

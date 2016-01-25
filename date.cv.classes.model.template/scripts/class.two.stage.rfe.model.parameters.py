@@ -64,6 +64,7 @@ scale_static_varbs = ['vbxbase','ageyrs','bloodo'];
 # 'SQRT','LOG';
 TSF='SQRT';
 TSFSTATIC='none';
+transform_static_varbs = ['vbxbase','ageyrs','bloodo'];
 
 ## CHOOSE CLASSIFIER
 CLSS='svm.l1';

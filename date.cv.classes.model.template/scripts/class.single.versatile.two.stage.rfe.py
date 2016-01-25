@@ -237,6 +237,7 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 	                    transform_static = transform_static,\
   				 transformer = transformer,\
   		          transformer_static = transformer_static,\
+		      transform_static_varbs = transform_static_varbs, \
 				       scale = scale,\
 			        scale_static = scale_static,\
 			              scaler = scaler,\
@@ -290,7 +291,7 @@ if shuffle==0:
 
 		if transform_static==1:
 			print 'transforming clinical variables with ',transformer_static
-			static_features = static_features.apply(transformer_static);
+			static_features = static_features.loc[:,transform_static_varbs].apply(transformer_static);
 		#endif	
 
 		#######################################################################################
@@ -401,7 +402,7 @@ if shuffle==0:
 	
 		if transform_static==1:
 			print 'transforming clinical variables with ',transformer_static
-			static_features = x_use.apply(transformer_static);
+			static_features = x_use.loc[:,transform_static_varbs].apply(transformer_static);
 		#endif	
 		
 		if scale_static==1:	
