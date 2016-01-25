@@ -161,7 +161,10 @@ def SVM_RFE_soft_two_stage(**kwargs):
     frequency_cutoff                      = [float(kwargs.get(varb)) for varb in ['frequency_cutoff']][0]; 
     include_otus,include_static           = [int(kwargs.get(varb)) for varb in ['include_otus','include_static']];  
     shuffle,scale,transform,pickle_model  = [int(kwargs.get(varb)) for varb in ['shuffle','scale','transform','pickle_model']];
+    scale_static, transform_static        = [int(kwargs.get(varb)) for varb in ['scale_static','transform_static']];
     scaler,transformer                    = [kwargs.get(varb) for varb in ['scaler','transformer']];
+    scaler_static,transformer_static      = [kwargs.get(varb) for varb in ['scaler_static','transformer_static']];
+    scale_static_varbs                    = [kwargs.get(varb) for varb in ['scale_static_varbs']];
     include_static_with_prob              = [kwargs.get(varb) for varb in ['include_static_with_prob']][0];	
     filepath    			  = [kwargs.get(varb) for varb in ['filepath']][0];
     numperm     			  = [str(kwargs.get(varb)) for varb in ['numperm']][0];
@@ -244,7 +247,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 						     index=x_test.index,  columns=x_test.keys());
 
 			# scaling clinical variables
-			scale_varbs   = ['vbxbase','ageyrs'];
+			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
 				varb_scale = scaler.fit(s_train.loc[:,varb]);
 				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb]);  			
@@ -261,6 +264,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		# initializes frames for recording data
 		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_train.shape[1]),columns=[cnt]) for aa in range(3)];		
 		df_features          = pd.DataFrame(index=x_train.keys(), columns=[cnt]);	
+		df_dist              = pd.DataFrame(index=x_test.index,   columns=range(1,x_train.shape[1]));
 		df_prob              = pd.DataFrame(index=x_test.index,   columns=range(1,x_train.shape[1]));
 		
 		if   (include_static==0) and (include_static_with_prob==0):
@@ -297,7 +301,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 
 			# fit and test classifier with remaining featuers (store AUC)
 			clf_fit  = clf.fit(x_train,y_train);
-			clf_eval = clf_fit.decision_function(x_test);
+			clf_dist = clf_fit.decision_function(x_test);
+			clf_prob = clf_fit.predict_proba(x_test)[:,1];
 			clf_pdct = clf_fit.predict(x_test);
 			clf_coef = clf_fit.coef_[0];
 
@@ -311,12 +316,13 @@ def SVM_RFE_soft_two_stage(**kwargs):
 				x_test_tmp   = x_all.loc[y_test.index,:];
 				
 				clf_fit  = clf_static.fit(x_train_tmp,y_train);
-				clf_eval = clf_fit.decision_function(x_test_tmp);
+				clf_prob = clf_fit.predict_proba(x_test_tmp)[:,1];
+				clf_dist = clf_fit.decision_function(x_test_tmp);
 				clf_pdct = clf_fit.predict(x_test_tmp);
 				clf_coef = clf_fit.coef_[0];
 
 			# compute AUC, accuracy, and MCC
-			df_auc.loc[num_feats,cnt]  = roc_auc_score(y_test,clf_eval);
+			df_auc.loc[num_feats,cnt]  = roc_auc_score(y_test,clf_dist);
 			df_acc.loc[num_feats,cnt]  = accuracy_score(y_test,clf_pdct);
 			df_mcc.loc[num_feats,cnt]  = matthews_corrcoef(y_test,clf_pdct);
 
@@ -327,7 +333,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			    df_coef.loc[x_train.keys(),num_feats] = clf_coef;
 			
 			# record model estimates of P(y=1) for subjects
-			df_prob.loc[x_test.index,num_feats] = clf_eval;
+			df_prob.loc[x_test.index,num_feats] = clf_prob;
+			df_dist.loc[x_test.index,num_feats] = clf_dist;
 		#endfor
 	
 	# use only static unselected features
@@ -340,7 +347,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
         	        print 'scaling with ',scaler
 
 			# scaling clinical variables
-			scale_varbs   = ['vbxbase','ageyrs'];
+			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
 				varb_scale          = scaler.fit(s_train.loc[:,varb]);
 				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb]);  			
@@ -348,16 +355,18 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		
 		df_auc,df_acc,df_mcc = [pd.DataFrame(index=['clinical'],columns=[cnt]) for aa in range(3)];
  		df_coef              = pd.DataFrame(index=x_train.keys(), columns=['clinical']);
+		df_dist              = pd.DataFrame(index=x_test.index,  columns=['clinical']);
 		df_prob              = pd.DataFrame(index=x_test.index,  columns=['clinical']);
 
 		# fit and test classifier with remaining featuers (store AUC)
 		clf_fit  = clf_static.fit(x_train,y_train);
-		clf_eval = clf_fit.decision_function(x_test);
+		clf_prob = clf_fit.predict_proba(x_test)[:,1];
+		clf_dist = clf_fit.decision_function(x_test);
 		clf_pdct = clf_fit.predict(x_test);
 		clf_coef = clf_fit.coef_[0];
 
 		# compute AUC, accuracy, and MCC
-		df_auc.loc['clinical',cnt] = roc_auc_score(y_test,clf_eval);
+		df_auc.loc['clinical',cnt] = roc_auc_score(y_test,clf_dist);
 		df_acc.loc['clinical',cnt] = accuracy_score(y_test,clf_pdct);
 		df_mcc.loc['clinical',cnt] = matthews_corrcoef(y_test,clf_pdct);
 
@@ -365,7 +374,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		df_coef.loc[x_train.keys(),'clinical'] = clf_coef;
 			
 		# record model estimates of P(y=!) for subjects
-		df_prob.loc[x_test.index,'clinical'] = clf_eval;
+		df_prob.loc[x_test.index,'clinical'] = clf_prob;
+		df_dist.loc[x_test.index,'clinical'] = clf_dist;
 	
 	#endif
 
@@ -376,6 +386,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
 	
 	df_coef.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.coef.txt',sep='\t',header=True,index_col=True);
 	df_prob.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.prob.txt',sep='\t',header=True,index_col=True);
+	df_dist.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.dist.txt',sep='\t',header=True,index_col=True);
 	
 	if include_otus:
 		df_features.to_csv(filepath+'/slurm.log/itr.'+numperm+'.cvfold.'+str(cnt)+'.features.txt',sep='\t',header=True,index_col=True);

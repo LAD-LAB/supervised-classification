@@ -38,28 +38,33 @@ frequency_cutoff = 0.10;
 
 num_features_1   = 501;
 coarse_steps_1   = 10;
-transform=0;
-scale=0;
+
+transform=1;
+transform_static=0;
+
+scale=1;
+scale_static=1;
+
 include_otus=1;
 include_static=0;
 include_static_with_prob=0;
 
 # CHOOSE VALIDATION SCHEME
 
-#CVS = 'LOO';
-#CVS = 'holdout_validation';
-#CVS = 'SKF.10';
+# 'LOO','holdout_validation','SSS.100.10'
 CVS = 'SKF.10';
-CVS = 'SSS.100.10';
 
 # CHOOSE SCALER (only applies if normalize==1)
-SCL=;
-#SCL='MinMax';
+# 'Normal','MinMax';
+SCL='Normal';
+SCLSTATIC='MinMax';
+scale_static_varbs = ['vbxbase','ageyrs','bloodo'];
 
 # CHOOSE TRANSFORM
-#TSF='LOG';
-TSF=;
+# 'SQRT','LOG';
+TSF='SQRT';
+TSFSTATIC='none';
 
 ## CHOOSE CLASSIFIER
-CLSS=;
-CLSSTATIC=;
+CLSS='svm.l1';
+CLSSTATIC='log.l2';

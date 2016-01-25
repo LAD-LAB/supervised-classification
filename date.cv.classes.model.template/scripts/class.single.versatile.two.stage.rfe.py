@@ -166,12 +166,29 @@ else:
 	scaler = 'none';
 #endif
 
+if   SCLSTATIC[0:6]=='Normal':
+	scaler_static = StandardScaler();	
+elif SCLSTATIC[0:6]=='MinMax':
+	scaler_static = MinMaxScaler();
+else:
+	scaler_static = 'none';
+#endif
+
 if   TSF=="SQRT":
 	transformer = np.sqrt;
 elif TSF=="LOG":
 	transformer = lambda x: np.log10(x+1e-6);
 else:
 	transformer = 'none';
+#endif
+
+if   TSFSTATIC=="SQRT":
+	transformer_static = np.sqrt;
+elif TSFSTATIC=="LOG":
+	transformer_static = lambda x: np.log10(x+1);
+else:
+	transformer_static = 'none';
+#endif
 
 ## CHOOSE CLASSIFIER FOR MICROBIOTA MODELS
 if    CLSS  == 'svm.l1':
@@ -217,10 +234,15 @@ args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
 				  clf_static = clf_static,\
 			    frequency_cutoff = frequency_cutoff,\
 			           transform = transform,\
+	                    transform_static = transform_static,\
   				 transformer = transformer,\
+  		          transformer_static = transformer_static,\
 				       scale = scale,\
-    	 			      scaler = scaler,\
-				include_otus = include_otus,\
+			        scale_static = scale_static,\
+			              scaler = scaler,\
+    	 		       scaler_static = scaler_static,\
+			  scale_static_varbs = scale_static_varbs, \
+		 		include_otus = include_otus,\
   			      include_static = include_static,\
 	            include_static_with_prob = include_static_with_prob,\
 			        pickle_model = pickle_model,\
@@ -264,7 +286,12 @@ if shuffle==0:
 		if transform==1:
 			print 'transforming with ',transformer 
 			x_use = x_use.apply(transformer)
-			print np.mean(x_use.apply(np.sum,1))
+		#endif
+
+		if transform_static==1:
+			print 'transforming clinical variables with ',transformer_static
+			static_features = static_features.apply(transformer_static);
+		#endif	
 
 		#######################################################################################
 		# Scale feature arrays
@@ -275,11 +302,13 @@ if shuffle==0:
 			x_use_scale = scaler.fit(x_use);
 			x_use = pd.DataFrame(x_use_scale.transform(x_use), \
 					     index=x_use.index, columns=x_use.keys());
+		#endif
 		
-			# scaling clinical variables	
-			scale_varbs   = ['vbxbase','ageyrs'];
+		if scale_static==1:	
+			print 'scaling clinical variables with ',scaler_static	
+			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
-				varb_scale = scaler.fit(static_features.loc[:,varb]);
+				varb_scale = scaler_static.fit(static_features.loc[:,varb]);
 				static_features.loc[:,varb] = varb_scale.transform(static_features.loc[:,varb]);  			
 			#endfor
 		#endif
@@ -294,6 +323,7 @@ if shuffle==0:
 		# initialize data recording frames
 		df_auc,df_acc,df_mcc = [pd.DataFrame(index=range(1,x_use.shape[1]),columns=[aa]) for aa in ['auc','acc','mcc']];		
 		df_features          = pd.DataFrame(index=x_use.keys(),columns=['rank']);
+		df_dist              = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
 		df_prob              = pd.DataFrame(index=x_use.index,  columns=range(1,x_use.shape[1]));
 
                 if (include_static==0) and (include_static_with_prob==0):
@@ -328,7 +358,8 @@ if shuffle==0:
 			
 			#fit and test classifier with remaining features 
 			clf_fit  = clf.fit(x_use,y_all);
-			clf_eval = clf_fit.decision_function(x_use);
+			clf_prob = clf_fit.predict_proba(x_use)[:,1];
+			clf_dist = clf_fit.decision_function(x_use);
 			clf_pdct = clf_fit.predict(x_use);
 			clf_coef = clf_fit.coef_[0];
 
@@ -339,13 +370,14 @@ if shuffle==0:
                                 x_all_tmp = x_all_eval.join(static_features,how='left');
 
                                 clf_fit  = clf_static.fit(x_all_tmp,y_all.loc[x_all_tmp.index]);
-                                clf_eval = clf_fit.decision_function(x_all_tmp);
+                                clf_prob = clf_fit.predict_proba(x_all_tmp)[:,1];
+                                clf_dist = clf_fit.decision_function(x_all_tmp);
                                 clf_pdct = clf_fit.predict(x_all_tmp);		
 				clf_coef = clf_fit.coef_[0];
 
 	
 			# compute AUC, accuracy, and MCC
-			df_auc.loc[num_feats,'auc']  = roc_auc_score(y_all,clf_eval);
+			df_auc.loc[num_feats,'auc']  = roc_auc_score(y_all,clf_dist);
 			df_acc.loc[num_feats,'acc']  = accuracy_score(y_all,clf_pdct);
 			df_mcc.loc[num_feats,'mcc']  = matthews_corrcoef(y_all,clf_pdct);
 			
@@ -356,31 +388,44 @@ if shuffle==0:
 			    df_coef.loc[x_use.keys(),num_feats] = clf_coef;
 	
 			#record model estimates of P(y=1) for subjects
-			df_prob.loc[x_use.index,num_feats] = clf_eval;
+			df_dist.loc[x_use.index,num_feats] = clf_dist;
+			df_prob.loc[x_use.index,num_feats] = clf_prob;
 		#endfor
 
 	elif (include_otus==0) and (include_static==1):
 
 		x_use   = static_features.loc[x_all.index,:];
+
+		# initialize data recording frames
+		df_auc,df_acc,df_mcc = [pd.DataFrame(index=['clinical'],columns=[aa]) for aa in ['auc','acc','mcc']];		
+	
+		if transform_static==1:
+			print 'transforming clinical variables with ',transformer_static
+			static_features = x_use.apply(transformer_static);
+		#endif	
 		
-		# scaling clinical variables	
-		scale_varbs   = ['vbxbase','ageyrs'];
-		for varb in scale_varbs:
-			varb_scale = scaler.fit(x_use.loc[:,varb]);
-			x_use.loc[:,varb] = varb_scale.transform(x_use.loc[:,varb]);  			
-		#endfor
+		if scale_static==1:	
+			# scaling clinical variables	
+			scale_varbs   = scale_static_varbs;
+			for varb in scale_varbs:
+				varb_scale = scaler.fit(x_use.loc[:,varb]);
+				x_use.loc[:,varb] = varb_scale.transform(x_use.loc[:,varb]);  			
+			#endfor
+		#endif
 
 		df_coef = pd.DataFrame(index=x_use.keys(),columns=['clinical']);
+		df_dist = pd.DataFrame(index=x_use.index, columns=['clinical']);
 		df_prob = pd.DataFrame(index=x_use.index, columns=['clinical']);
 	
 		#fit and test classifier 
 		clf_fit  = clf_static.fit(x_use,y_all);
-		clf_eval = clf_fit.decision_function(x_use);
+		clf_prob = clf_fit.predict_proba(x_use)[:,1];
+		clf_dist = clf_fit.decision_function(x_use);
 		clf_pdct = clf_fit.predict(x_use);
 		clf_coef = clf_fit.coef_[0];
 
 		# compute AUC, accuracy, and MCC
-		df_auc.loc['clinical','auc'] = roc_auc_score(y_all,clf_eval);
+		df_auc.loc['clinical','auc'] = roc_auc_score(y_all,clf_dist);
 		df_acc.loc['clinical','acc'] = accuracy_score(y_all,clf_pdct);
 		df_mcc.loc['clinical','mcc'] = matthews_corrcoef(y_all,clf_pdct);
 
@@ -388,7 +433,8 @@ if shuffle==0:
 		df_coef.loc[x_use.keys(),'clinical'] = clf_coef;
 		
 		# record model esitmates of P(y==1) for subjects
-		df_prob.loc[x_use.index,'clinical'] = clf_eval;
+		df_dist.loc[x_use.index,'clinical'] = clf_dist;
+		df_prob.loc[x_use.index,'clinical'] = clf_prob;
 	#endif
 
 
@@ -399,6 +445,7 @@ df_mcc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.mcc.txt',sep='\t',header
 
 # SAVE FEATURE LISTS/RANKING
 df_coef.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.coef.txt',sep='\t',header=True,index_col=True);
+df_dist.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.dist.txt',sep='\t',header=True,index_col=True);
 df_prob.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.prob.txt',sep='\t',header=True,index_col=True);
 
 if include_otus==1:
