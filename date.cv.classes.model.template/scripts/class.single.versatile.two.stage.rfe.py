@@ -139,7 +139,7 @@ y_holdin_df       = pd.read_csv(txt_y_holdin_df,       sep='\t',header=0,index_c
 y_holdout_df      = pd.read_csv(txt_y_holdout_df,      sep='\t',header=0,index_col=0);
 y_all             = pd.read_csv(txt_y_all,             sep='\t',header=0,index_col=0);
 clinical_df       = pd.read_csv(txt_clinical_df,       sep='\t',header=0,index_col=0);
-static_features   = clinical_df;
+static_features   = clinical_df.astype(float);
 
 #######################################################################
 ##Cross-validated model training to approximate generalized performance and feature importances

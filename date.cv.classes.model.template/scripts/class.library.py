@@ -164,8 +164,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
     scale_static, transform_static        = [int(kwargs.get(varb)) for varb in ['scale_static','transform_static']];
     scaler,transformer                    = [kwargs.get(varb) for varb in ['scaler','transformer']];
     scaler_static,transformer_static      = [kwargs.get(varb) for varb in ['scaler_static','transformer_static']];
-    scale_static_varbs                    = [kwargs.get(varb) for varb in ['scale_static_varbs']];
-    transform_static_varbs                = [kwargs.get(varb) for varb in ['transform_static_varbs']];
+    scale_static_varbs                    = [kwargs.get(varb) for varb in ['scale_static_varbs']][0];
+    transform_static_varbs                = [kwargs.get(varb) for varb in ['transform_static_varbs']][0];
     include_static_with_prob              = [kwargs.get(varb) for varb in ['include_static_with_prob']][0];	
     filepath    			  = [kwargs.get(varb) for varb in ['filepath']][0];
     numperm     			  = [str(kwargs.get(varb)) for varb in ['numperm']][0];
@@ -180,6 +180,7 @@ def SVM_RFE_soft_two_stage(**kwargs):
     print 'shuffle\t',shuffle
 	
     # initialize
+    static_features = static_features.astype(float);
     _tests_ix,_trues,_scores,_probas,_predicts,_support,_ranking,_auroc_p,_auroc_s,_acc,_mcc  = [[] for aa in range(11)];
     
     cnt = int(numperm)*len(cv);
@@ -352,8 +353,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		x_test    = static_features.loc[x_test.index,:];
 	
 		if transform_static==1:
-			s_train = s_train.loc[:,transform_static_varbs].apply(transformer_static);		
-			s_test  = s_test.loc[:,transform_static_varbs].apply(transformer_static);		
+			s_train = x_train.loc[:,transform_static_varbs].apply(transformer_static);		
+			s_test  = x_test.loc[:,transform_static_varbs].apply(transformer_static);		
 		
 		if scale_static_varbs==1:
         	        print 'scaling clinical variables with ',scaler_static
