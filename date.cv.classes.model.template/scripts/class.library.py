@@ -239,8 +239,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		if transform_static==1:
 			transform_varbs = transform_static_varbs;
 			print 'transforming clinical variables with ',transformer_static
-			s_train = s_train.loc[:,transform_static_varbs].apply(transformer_static);
-			s_test  = s_test.loc[:,transform_static_varbs].apply(transformer_static);
+			s_train.loc[:,transform_static_varbs] = s_train.loc[:,transform_static_varbs].apply(transformer_static);
+			s_test.loc[:,transform_static_varbs] = s_test.loc[:,transform_static_varbs].apply(transformer_static);
 
 		#################################################################################
 		#Scale feature arrays
@@ -258,9 +258,9 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			# scaling clinical variables
 			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
-				varb_scale = scaler_static.fit(s_train.loc[:,varb]);
-				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb]);  			
-				s_test.loc[:,varb]  = varb_scale.transform(s_test.loc[:,varb]); 		
+				varb_scale = scaler_static.fit(s_train.loc[:,varb].values);
+				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb].values);  			
+				s_test.loc[:,varb]  = varb_scale.transform(s_test.loc[:,varb].values); 		
 			
 		#################################################################################
 		#Apply Recrusive Feature Elimination wrapped aroud a user-defined classifier
@@ -353,8 +353,8 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		x_test    = static_features.loc[x_test.index,:];
 	
 		if transform_static==1:
-			s_train = x_train.loc[:,transform_static_varbs].apply(transformer_static);		
-			s_test  = x_test.loc[:,transform_static_varbs].apply(transformer_static);		
+			s_train.loc[:,transform_static_varbs]  = x_train.loc[:,transform_static_varbs].apply(transformer_static);		
+			s_test.loc[:,transform_static_varbs]   = x_test.loc[:,transform_static_varbs].apply(transformer_static);		
 		
 		if scale_static_varbs==1:
         	        print 'scaling clinical variables with ',scaler_static
@@ -362,9 +362,9 @@ def SVM_RFE_soft_two_stage(**kwargs):
 			# scaling clinical variables
 			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
-				varb_scale          = scaler_static.fit(s_train.loc[:,varb]);
-				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb]);  			
-				s_test.loc[:,varb]  = varb_scale.transform(s_test.loc[:,varb]);  			
+				varb_scale          = scaler_static.fit(s_train.loc[:,varb].values);
+				s_train.loc[:,varb] = varb_scale.transform(s_train.loc[:,varb].values);  			
+				s_test.loc[:,varb]  = varb_scale.transform(s_test.loc[:,varb].values);  			
 		
 		df_auc,df_acc,df_mcc = [pd.DataFrame(index=['clinical'],columns=[cnt]) for aa in range(3)];
  		df_coef              = pd.DataFrame(index=x_train.keys(), columns=['clinical']);

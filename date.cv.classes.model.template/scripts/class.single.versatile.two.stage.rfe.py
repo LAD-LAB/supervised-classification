@@ -291,7 +291,7 @@ if shuffle==0:
 
 		if transform_static==1:
 			print 'transforming clinical variables with ',transformer_static
-			static_features = static_features.loc[:,transform_static_varbs].apply(transformer_static);
+			static_features.loc[:,transform_static_varbs] = static_features.loc[:,transform_static_varbs].apply(transformer_static);
 		#endif	
 
 		#######################################################################################
@@ -309,8 +309,8 @@ if shuffle==0:
 			print 'scaling clinical variables with ',scaler_static	
 			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
-				varb_scale = scaler_static.fit(static_features.loc[:,varb]);
-				static_features.loc[:,varb] = varb_scale.transform(static_features.loc[:,varb]);  			
+				varb_scale = scaler_static.fit(static_features.loc[:,varb].values);
+				static_features.loc[:,varb] = varb_scale.transform(static_features.loc[:,varb].values); 	
 			#endfor
 		#endif
 
@@ -402,15 +402,15 @@ if shuffle==0:
 	
 		if transform_static==1:
 			print 'transforming clinical variables with ',transformer_static
-			static_features = x_use.loc[:,transform_static_varbs].apply(transformer_static);
+			static_features.loc[:,transform_static_varbs] = x_use.loc[:,transform_static_varbs].apply(transformer_static);
 		#endif	
 		
 		if scale_static==1:	
 			# scaling clinical variables	
 			scale_varbs   = scale_static_varbs;
 			for varb in scale_varbs:
-				varb_scale = scaler.fit(x_use.loc[:,varb]);
-				x_use.loc[:,varb] = varb_scale.transform(x_use.loc[:,varb]);  			
+				varb_scale = scaler_static.fit(x_use.loc[:,varb].values);
+				x_use.loc[:,varb] = varb_scale.transform(x_use.loc[:,varb].values); 	
 			#endfor
 		#endif
 
