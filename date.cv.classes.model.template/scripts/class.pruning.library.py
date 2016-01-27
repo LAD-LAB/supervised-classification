@@ -87,14 +87,25 @@ def TaxonomyDataFrame(x):
     taxonomy_df = taxonomy_df.reindex_axis(['k','p','c','o','f','g','s','otu'], axis=1);
     
     return taxonomy_df
+
+def SegregateMicrobes(df):
     
+    x_microbes = df.loc[:,[dfk.startswith('k__') for dfk in df.keys()]];
+    x_clinical = df.loc[:,[not dfk.startswith('k__') for dfk in df.keys()]];
+    
+    return x_microbes, x_clinical 
+
 def dropNonInformativeClades(x):
     
     nodes  = ['k','p','c','o','f','g','s'];
     toDrop = [];    
-    
+   
+    # split input data_frame into microbes versus everything else; only prune on the microbes subset
+    # how do you know a column corresponds to a microbe: its key begins with "k__"
+    x_microbes,x_clinical = SegregateMicrobes(x);  
+	 
     # Let's create a dataframe with all of the OTU in the data set and detaied taxonomic information
-    taxonomy_df = TaxonomyDataFrame(x)
+    taxonomy_df = TaxonomyDataFrame(x_microbes)
 
     # Let's try to parse through each otu and see if it has any relatives at above clades. If so, we will manually create a variable name for that shared clade. 
     for n in nodes[1:]:
@@ -114,6 +125,8 @@ def dropNonInformativeClades(x):
 		#endif
 	#endif
     #endfor
-    x.drop(labels=toDrop,axis=1,inplace=True)    
-    
+
+    x_microbes.drop(labels=toDrop,axis=1,inplace=True)    
+    x = x_microbes.join(x_clinical,how='left');
+	
     return x
