@@ -402,7 +402,7 @@ if shuffle==0:
 	
 		if transform_static==1:
 			print 'transforming clinical variables with ',transformer_static
-			static_features.loc[:,transform_static_varbs] = x_use.loc[:,transform_static_varbs].apply(transformer_static);
+			x_use.loc[:,transform_static_varbs] = x_use.loc[:,transform_static_varbs].apply(transformer_static);
 		#endif	
 		
 		if scale_static==1:	
