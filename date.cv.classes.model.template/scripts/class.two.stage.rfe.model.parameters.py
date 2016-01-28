@@ -40,7 +40,7 @@ num_features_1   = 501;
 coarse_steps_1   = 10;
 
 transform=1;
-transform_static=0;
+transform_static=1;
 
 scale=1;
 scale_static=1;
@@ -57,14 +57,14 @@ CVS = 'SKF.10';
 # CHOOSE SCALER (only applies if normalize==1)
 # 'Normal','MinMax';
 SCL='Normal';
-SCLSTATIC='MinMax';
+SCLSTATIC='Normal';
 scale_static_varbs = ['vbxbase','ageyrs','bloodo'];
 
 # CHOOSE TRANSFORM
 # 'SQRT','LOG';
-TSF='SQRT';
-TSFSTATIC='none';
-transform_static_varbs = ['vbxbase','ageyrs','bloodo'];
+TSF='LOG';
+TSFSTATIC='LOG';
+transform_static_varbs = ['vbxbase',];
 
 ## CHOOSE CLASSIFIER
 CLSS='svm.l1';

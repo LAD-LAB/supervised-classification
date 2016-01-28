@@ -156,6 +156,8 @@ elif    CVS[0:3]=="SKF":
             cross_validation = StratifiedKFold(np.ravel(y_all),n_folds=num_folds,shuffle=True,random_state=random.randint(1,10**9)); 
 elif    CVS=="holdout_validation":
             cross_validation = [(np.array(range(0,x_holdin_df.shape[0])), np.array(range(x_holdin_df.shape[0],x_all.shape[0])))]; 
+else:
+	cross_validation='none';
 #endif
 
 if   SCL[0:6]=='Normal':
@@ -224,34 +226,34 @@ print '(transform with transformer)\t',(transform,transformer)
 print '(scale with scaler)\t',(scale,scaler)
 print 'shuffle\t',shuffle
 
-args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
-				           x = x_all,\
-					   y = y_all,\
-		             static_features = clinical_df,\
-			            coarse_1 = num_features_1,\
-			       coarse_step_1 = coarse_steps_1,\
-				         clf = clf,\
-				  clf_static = clf_static,\
-			    frequency_cutoff = frequency_cutoff,\
-			           transform = transform,\
-	                    transform_static = transform_static,\
-  				 transformer = transformer,\
-  		          transformer_static = transformer_static,\
-		      transform_static_varbs = transform_static_varbs, \
-				       scale = scale,\
-			        scale_static = scale_static,\
-			              scaler = scaler,\
-    	 		       scaler_static = scaler_static,\
-			  scale_static_varbs = scale_static_varbs, \
-		 		include_otus = include_otus,\
-  			      include_static = include_static,\
-	            include_static_with_prob = include_static_with_prob,\
-			        pickle_model = pickle_model,\
-    			            filepath = filepath,\
-				     numperm = numperm,\
-    				     shuffle = shuffle);
-
-
+if not cross_validation == 'none': 
+	args_out = SVM_RFE_soft_two_stage(arg_ext_cv = cross_validation, \
+					           x = x_all,\
+						   y = y_all,\
+			             static_features = clinical_df,\
+				            coarse_1 = num_features_1,\
+				       coarse_step_1 = coarse_steps_1,\
+					         clf = clf,\
+					  clf_static = clf_static,\
+				    frequency_cutoff = frequency_cutoff,\
+				           transform = transform,\
+		                    transform_static = transform_static,\
+	  				 transformer = transformer,\
+	  		          transformer_static = transformer_static,\
+			      transform_static_varbs = transform_static_varbs, \
+					       scale = scale,\
+				        scale_static = scale_static,\
+				              scaler = scaler,\
+	    	 		       scaler_static = scaler_static,\
+				  scale_static_varbs = scale_static_varbs, \
+			 		include_otus = include_otus,\
+	  			      include_static = include_static,\
+		            include_static_with_prob = include_static_with_prob,\
+				        pickle_model = pickle_model,\
+	    			            filepath = filepath,\
+					     numperm = numperm,\
+	    				     shuffle = shuffle);
+	
 if shuffle==0: 
 
 	if include_otus==1:
@@ -263,12 +265,15 @@ if shuffle==0:
 		################################################################################
 		#Filter data based on frequency of presence of each feature across model samples
 		#################################################################################
-		bfd = pd.DataFrame(binarize(x_all),index=x_all.index,columns=x_all.keys())
-		dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_all.shape[0]))[0]]
+		
+		x_microbes,x_clinical = SegregateMicrobes(x_all);
+		
+		bfd = pd.DataFrame(binarize(x_microbes),index=x_microbes.index,columns=x_microbes.keys())
+		dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_microbes.shape[0]))[0]]
 		
 		print 'thresholding'
 		print x_all.shape,'-->',	
-		x_use  = x_all.loc[:,dense_features];
+		x_use  = x_microbes.loc[:,dense_features].join(x_clinical,how='left');
 		print x_use.shape
 
 		#######################################################################################
@@ -283,17 +288,20 @@ if shuffle==0:
 		#######################################################################################
 		# Transform feature values
 		#######################################################################################
-		
+
 		if transform==1:
 			print 'transforming with ',transformer 
-			x_use = x_use.apply(transformer)
+			x_microbes,x_clinical = SegregateMicrobes(x_use);
+			if (not x_clinical.empty) and (transform_static==1):
+				x_clinical.loc[:,transform_static_varbs] = x_clinical.loc[:,transform_static_varbs].apply(transformer_static);	
+			x_use= x_microbes.apply(transformer).join(x_clinical,how='left');
 		#endif
-
+		
 		if transform_static==1:
 			print 'transforming clinical variables with ',transformer_static
 			static_features.loc[:,transform_static_varbs] = static_features.loc[:,transform_static_varbs].apply(transformer_static);
-		#endif	
-
+		#endif
+		
 		#######################################################################################
 		# Scale feature arrays
 		#######################################################################################
@@ -333,13 +341,10 @@ if shuffle==0:
 			df_coef     = pd.DataFrame(index=['bacterial_risk']+list(static_features.keys()), columns=range(1,x_train.shape[1]));
                 elif include_static==1:
                         df_coef  = pd.DataFrame(index=list(x_use.keys())+list(static_features.keys()), columns=range(1,x_use.shape[1]));
-	
+
 		# finely prune features one by one
 		for num_feats in range(x_use.shape[1])[::-1][:-1]:
-
-                        x_use_keys = list(set(x_use.keys()).difference(static_features.keys()))
-                        x_use      = x_use.loc[:,x_use_keys];
-
+	
 			#single feature elimnation
 			SFE = RFE(clf,n_features_to_select=num_feats,step=1);
 			SFE = SFE.fit(x_use,y_all);
@@ -348,7 +353,7 @@ if shuffle==0:
 			features_kept               = x_use.keys()[SFE.support_];
 			feature_removed             = x_use.keys()[~SFE.support_].values[0];
 			df_features.loc[feature_removed,'rank'] = num_feats;
-
+			
 			#transform featuer matrices
 			x_use = x_use.loc[:,features_kept];
 

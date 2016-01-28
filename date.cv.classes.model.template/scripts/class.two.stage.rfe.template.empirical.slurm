@@ -16,13 +16,14 @@ txt_out=$simpath/$simname.out
 txt_err=$simpath/$simname.err
 
 txt_params=$prefix/scripts/class.two.stage.rfe.model.parameters.py
-txt_features_df=$prefix/data/features_df.txt
+txt_features_df=$prefix/data/features.ygbr.day.2.txt
 txt_taxa_level_map=$prefix/data/taxa_level_map.txt
-txt_mapping=$prefix/data/smic.study.mapping.txt
-txt_clinical=$prefix/data/smic.study.clinical.data.txt
+txt_outcomes=$prefix/data/outcomes.ygbr.day.2.txt
+txt_splitting=$prefix/data/splitting.ygbr.day.2.txt
+txt_clinical=$prefix/data/clinical.ygbr.day.2.txt
 num_features=
 numperm=30
 shuffle=0
 pickle_model=0
 
-srun -o $txt_out -e $txt_err python $pypath/class.multiple.versatile.py $txt_params $txt_features_df $txt_taxa_level_map $txt_mapping $txt_clinical $simpath $simname $shuffle $numperm $num_features $pickle_model
+srun -o $txt_out -e $txt_err python $pypath/class.multiple.versatile.py $txt_params $txt_features_df $txt_taxa_level_map $txt_outcomes $txt_splitting $txt_clinical $simpath $simname $shuffle $numperm $num_features $pickle_model

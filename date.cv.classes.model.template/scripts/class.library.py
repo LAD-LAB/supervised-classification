@@ -208,13 +208,16 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		#################################################################################
 		#Filter data based on frequency of presence of each feature across model samples
 		#################################################################################
-		bfd = pd.DataFrame(binarize(x_train),index=x_train.index,columns=x_train.keys())
-		dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_train.shape[0]))[0]]
+		x_microbes_train,x_clinical_train = SegregateMicrobes(x_train);
+		x_microbes_test,x_clinical_test = SegregateMicrobes(x_test);
+		
+		bfd = pd.DataFrame(binarize(x_microbes_train),index=x_microbes_train.index,columns=x_microbes_train.keys())
+		dense_features = bfd.keys()[np.where(bfd.apply(np.sum)>=np.ceil(frequency_cutoff*x_microbes_train.shape[0]))[0]]
 		
 		print 'thresholding'
 		print '(train,test)\t',x_train.shape,x_test.shape,'-->',
-		x_train = x_train.loc[:,dense_features]
-		x_test  = x_test.loc[:,dense_features]
+		x_train = x_microbes_train.loc[:,dense_features].join(x_clinical_train,how='left');
+		x_test  = x_microbes_test.loc[:,dense_features].join(x_clinical_test,how='left');
 		print x_train.shape,x_test.shape
 
 		#################################################################################
@@ -232,9 +235,18 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		#################################################################################
 
 		if transform==1:
+			x_microbes_train,x_clinical_train = SegregateMicrobes(x_train);
+			x_microbes_test,x_clinical_test = SegregateMicrobes(x_test);
+
+			if (not x_clinical_train.empty) and (transform_static==1):
+				x_clinical_train.loc[:,transform_static_varbs] = x_clinical_train.loc[:,transform_static_varbs].apply(transformer_static);
+				x_clinical_test.loc[:,transform_static_varbs] = x_clinical_test.loc[:,transform_static_varbs].apply(transformer_static);
+
 			print 'transforming with ',transformer
-			x_train = x_train.apply(transformer);
-			x_test  = x_test.apply(transformer);
+			x_train = x_microbes_train.apply(transformer).join(x_clinical_train,how='left');
+			x_test  = x_microbes_test.apply(transformer).join(x_clinical_test,how='left');
+
+			
 
 		if transform_static==1:
 			transform_varbs = transform_static_varbs;
