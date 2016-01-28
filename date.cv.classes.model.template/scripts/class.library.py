@@ -298,9 +298,10 @@ def SVM_RFE_soft_two_stage(**kwargs):
 		# finely prune features one by one
 		for num_feats in range(x_train.shape[1])[::-1][:-1]:
 
-			x_train_keys = list(set(x_train.keys()).difference(static_features.keys()))			
-			x_train      = x_train.loc[:,x_train_keys];
-
+			if include_static==1:
+				x_use_keys = list(set(x_use.keys()).difference(static_features.keys()));
+				x_use      = x_use.loc[:,x_use_keys];		
+	
 			#single feature elimination
 			SFE = RFE(clf,n_features_to_select=num_feats,step=1);
 			SFE = SFE.fit(x_train,y_train);

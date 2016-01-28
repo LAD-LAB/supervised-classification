@@ -344,6 +344,10 @@ if shuffle==0:
 
 		# finely prune features one by one
 		for num_feats in range(x_use.shape[1])[::-1][:-1]:
+
+			if include_static==1:
+				x_use_keys = list(set(x_use.keys()).difference(static_features.keys()));
+				x_use      = x_use.loc[:,x_use_keys];
 	
 			#single feature elimnation
 			SFE = RFE(clf,n_features_to_select=num_feats,step=1);
@@ -444,18 +448,18 @@ if shuffle==0:
 	#endif
 
 
-# SAVE AUROC,ACCURACY,and MCC 
-df_auc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.auc.txt',sep='\t',header=True,index_col=True);
-df_acc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.acc.txt',sep='\t',header=True,index_col=True);
-df_mcc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.mcc.txt',sep='\t',header=True,index_col=True);
-
-# SAVE FEATURE LISTS/RANKING
-df_coef.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.coef.txt',sep='\t',header=True,index_col=True);
-df_dist.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.dist.txt',sep='\t',header=True,index_col=True);
-df_prob.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.prob.txt',sep='\t',header=True,index_col=True);
-
-if include_otus==1:
-	df_features.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.features.txt',sep='\t',header=True,index_col=True);
+	# SAVE AUROC,ACCURACY,and MCC 
+	df_auc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.auc.txt',sep='\t',header=True,index_col=True);
+	df_acc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.acc.txt',sep='\t',header=True,index_col=True);
+	df_mcc.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.mcc.txt',sep='\t',header=True,index_col=True);
+	
+	# SAVE FEATURE LISTS/RANKING
+	df_coef.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.coef.txt',sep='\t',header=True,index_col=True);
+	df_dist.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.dist.txt',sep='\t',header=True,index_col=True);
+	df_prob.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.prob.txt',sep='\t',header=True,index_col=True);
+	
+	if include_otus==1:
+		df_features.to_csv(filepath+'/slurm.log/itr.'+str(numperm)+'.features.txt',sep='\t',header=True,index_col=True);
 
 ##########################################################
 # end of script		   
